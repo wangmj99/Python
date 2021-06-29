@@ -6,4 +6,4 @@ def eqn(x):
 mymin = minimize(eqn, 0, method='BFGS')
 
 print(mymin)
-print('test tets and test 2121')
+print('test tets and test 1213')
