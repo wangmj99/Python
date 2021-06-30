@@ -8,6 +8,7 @@ def eqn(x):
 mymin = minimize(eqn, 0, method='BFGS')
 
 print(mymin)
+<<<<<<< HEAD
 print('test tets and test 2121')
 
 arr = [1,2,3,4,5,6,-2]
@@ -54,3 +55,6 @@ q4 = "".join([c for c in string if c not in ['a', 'e', 'o', 'i', 'u']])
 
 #7. Use a nested list comprehension to find all of the numbers from 1–1000 that are divisible by any single digit besides 1 (2–9)
 q7 = [i for i in nums if True in [True for divisor in range(2,10) if i%divisor == 0]]
+
+print('test tets and test 1213')
+
