@@ -5,17 +5,20 @@ import numpy as np
 
 ms = pd.read_csv('./data/MSFT.csv', index_col=0)
 
+print(ms.head())
 print(ms.describe())
 
-#print(ms.loc['2020-01-01':'2020-01-31', :].tail())
+
+#print(ms.loc['2020-01-01':'2020-01-31', 1:].tail())
 
 #ms.loc['2020-01-01':'2020-01-31', 'Close'].plot()
 #ms.loc['2020-02-01':'2020-02-30', 'Close'].plot()
-#ms['Close'].plot()
+#ms.loc[:,'Close'].plot()
 #plt.show()
 
 
-ms['PriceDiff'] = ms['Close'].shift(-1) - ms['Close']
+ms['PriceDiff'] = ms['Open'].shift(-1) - ms['Close']
+
 ms['Return'] = ms['PriceDiff']/ms['Close']
 
 ms['Direction'] = [1 if ms.loc[ei, 'Return']>0 else -1 for ei in ms.index]
@@ -23,16 +26,21 @@ ms['Fast'] = ms['Close'].rolling(20).mean()
 ms['Slow'] = ms['Close'].rolling(50).mean()
 ms=ms.dropna()
 
-
-
 ms['Hold'] = [1 if ms.loc[ei, 'Fast']>ms.loc[ei, 'Slow'] else 0 for ei in ms.index]
 
 
 ms['Profit'] = [ms.loc[ei,'PriceDiff'] if ms.loc[ei, 'Hold']==1 else 0 for ei in ms.index]
+ms['avg50']= ms['Close'].rolling(50).mean()
+ms['avg20']= ms['Close'].rolling(20).mean()
+
+ms.Close.plot()
+ms.avg20.plot()
+ms.avg50.plot()
 
 
 
 ms['Wealth']= ms['Profit'].cumsum()
+print(ms.head())
 
 #ms['Wealth'].plot()
 #plt.axhline(y=0, color = 'red')

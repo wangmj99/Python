@@ -8,7 +8,7 @@ def eqn(x):
 mymin = minimize(eqn, 0, method='BFGS')
 
 print(mymin)
-<<<<<<< HEAD
+
 print('test tets and test 2121')
 
 arr = [1,2,3,4,5,6,-2]

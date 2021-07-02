@@ -1,6 +1,5 @@
 import pandas as pd 
 #import statsmodels.api as smf
-import statsmodels.formula.api as smf
 import numpy as np 
 import matplotlib.pyplot as plt 
 
