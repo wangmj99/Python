@@ -1,18 +1,22 @@
+from datetime import date
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import math 
 import statsmodels.formula.api as smf
 from FinUtil import *
-
-
-
+from MarketDataMgr import *
 
 def calcHedgeDrawDown():
-    df = generateEquityAdjCloseTable(['MDY', 'iwm'])
-    ms= df['MDY'].pct_change()
-    iwm= df['IWM'].pct_change()
-    hedge = (ms.dropna()-iwm.dropna())
+    startDate = datetime.strptime('01/01/2000', '%m/%d/%Y')
+    endDate  = datetime.strptime('09/01/2022', '%m/%d/%Y')
+    s1,s2 = 'V', 'MA'
+    #MarketDataMgr.retrieveHistoryData([s1, s2], startDate, endDate)
+
+    df = generateEquityAdjCloseTable([s1, s2], startDate, endDate)
+    s1df= df[s1].pct_change()
+    s2df= df[s2].pct_change()
+    hedge = (s1df.dropna()-s2df.dropna())
 
     res = getPnlSummary(hedge)
     
@@ -22,9 +26,9 @@ def calcHedgeDrawDown():
     res['cumsum'].plot()
     plt.show()
 
-def pairTrading(s1, s2):
+def pairTrading(s1:str, s2:str, startDate: datetime, endDate:datetime):
     s1, s2 = str.upper(s1), str.upper(s2)
-    df = generateEquityAdjCloseTable([s1, s2])
+    df = generateEquityAdjCloseTable([s1, s2], startDate, endDate)
 
     mid = int(len(df)/2)
     train = df.iloc[:mid]
@@ -93,7 +97,7 @@ def CreatePairTradingPositionByZscore(spread):
     return posSeries
 
 
-pairTrading('MDY', 'IWM')
+pairTrading('GLD', 'GDX', datetime(2000,2,1), datetime(2022,9,1))
 #calcHedgeDrawDown()
 
 

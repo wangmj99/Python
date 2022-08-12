@@ -1,7 +1,10 @@
+from datetime import datetime
 from typing import Tuple
 import pandas as pd
 import math
 from abc import ABC,abstractmethod
+import os.path
+from MarketDataMgr import *
 
 class PerfMeasure:
     
@@ -90,12 +93,13 @@ def getPortfolioDailyPnlByPriceAndWeight(prices: list, weights: list)->pd.Series
     return res
 
 #Take a list of equity history data as csv files and output adjust close in dataframe format
-def generateEquityAdjCloseTable(symbols: list, innerjoin = True )->pd.DataFrame:
-    path = './data/{}.csv'
+def generateEquityAdjCloseTable(symbols: list, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
+    path = MarketDataMgr.dataFilePath
     closePriceLabel = 'Adj Close'
     res = None
     for symbol in symbols:
-        name= path.format(symbol)
+        md = MarketDataMgr.retrieveHistoryData([symbol], startDate, endDate)
+        name= md[str.upper(symbol)]
         df = pd.read_csv(name, index_col=0)
         df.index = pd.to_datetime(df.index)
         df.sort_index(axis=0)
