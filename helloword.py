@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from array import *
 import numpy as np
 from scipy.sparse.sputils import matrix
+from  datetime import datetime
 
 def eqn(x):
   return x**2 + x + 2
@@ -115,3 +116,6 @@ if df2 is None: df2 = pd.DataFrame(list1)
 
 df2 = pd.concat([df2,  list2, list4], axis=1)
 print(df2)
+
+end = datetime.strptime('10/1/2021', '%m/%d/%Y')
+print((end - datetime(1970,1,1)).days*24*60*60)

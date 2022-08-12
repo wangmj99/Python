@@ -79,8 +79,6 @@ def getPortfolioDailyNAVByPriceAndWeight(prices: list, weights: list)->pd.Series
     res = pd.Series(nav)
     res.index = prices[0].index
     return res
-
-
     
 # input list of price series represent multiple stock prices, share weights for each stock weight in porfolio
 def getPortfolioDailyPnlByPriceAndWeight(prices: list, weights: list)->pd.Series:
@@ -89,19 +87,6 @@ def getPortfolioDailyPnlByPriceAndWeight(prices: list, weights: list)->pd.Series
     nav = getPortfolioDailyNAVByPriceAndWeight(prices, weights)
     res = getDailyPnl(nav)
 
-    """ 
-    pnl = [0]
-    count = len(prices[0])
-    for i in range(1, count):
-        preVal, currVal = 0, 0
-        for j in range(len(weights)):
-            currVal += prices[j][i]*weights[j]
-            preVal += prices[j][i-1]*weights[j]
-        pval = currVal/preVal -1
-        pnl.append(pval)
-    res = pd.Series(pnl)
-    res.index = prices[0].index 
-    """
     return res
 
 #Take a list of equity history data as csv files and output adjust close in dataframe format
@@ -123,4 +108,11 @@ def generateEquityAdjCloseTable(symbols: list, innerjoin = True )->pd.DataFrame:
             else :
                 res = pd.concat([res, temp], axis = 1)
     return res
+
+def genereateRollingZscore(srs: pd.Series, window: int):
+    r = srs.rolling(window=window)
+    m = r.mean().shift(1)
+    s = r.std(ddof=0).shift(1)
+    z = (srs-m)/s
+    return z
 
