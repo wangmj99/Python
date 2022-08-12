@@ -9,7 +9,7 @@ from FinUtil import *
 
 
 def calcHedgeDrawDown():
-    df = generateEquityDataFrame(['MDY', 'iwm'])
+    df = generateEquityAdjCloseTable(['MDY', 'iwm'])
     ms= df['MDY'].pct_change()
     iwm= df['IWM'].pct_change()
     hedge = (ms.dropna()-iwm.dropna())
