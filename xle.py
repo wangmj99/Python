@@ -34,7 +34,7 @@ def plotMonthly(ts_monthly):
     #ts_monthly.hist(bins=50, density=True,figsize=(7,7))
     #stats.probplot(zc, dist='norm', plot=plt)
 
-ticker = '^GSPC'
+ticker = 'IWM'
 ticker_df = gen_dataframe(ticker)
 ticker_monthly = gen_monthly_ts(ticker_df)
 printMonthlyStats(ticker, 0.025, 95, ticker_monthly)

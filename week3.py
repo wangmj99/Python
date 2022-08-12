@@ -31,6 +31,7 @@ print ('Sample collection mean 0 is ', pd.DataFrame(sample_variance_collection0)
 print ('Sample collection mean 1 is ', pd.DataFrame(sample_variance_collection1)[0].mean())
 
 Fstsample = pd.DataFrame(np.random.normal(10,5,size=30))
+
 print('sample mean is ', Fstsample[0].mean())
 print('sample SD is ', Fstsample[0].std(ddof=1))
 

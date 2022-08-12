@@ -30,7 +30,12 @@ fb = pd.read_csv('./data/facebook.csv')
 
 ms = pd.read_csv('./data/msft.csv', index_col=0)
 
-print("data type is %s" % (type(ms.loc['2019-12-18':'2020-11-30'])))
+closeTS = ms['Close']
+print(closeTS)
+df = pd.DataFrame({'Date':closeTS.index, 'Close': closeTS.values})
+print(df.head(5))
+
+
 
 print(ms[['Open','Close']].head())
 

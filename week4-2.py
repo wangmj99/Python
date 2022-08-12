@@ -58,6 +58,7 @@ lm.summary()
 
 print(lm.summary())
 
+
 Train['PredictedY'] = lm.predict(Train)
 Test['PredictedY'] = lm.predict(Test)
 
@@ -74,6 +75,7 @@ def adjustedMetric(data, model, model_k, yname):
     SSE = ((data[yname] - data['yhat'])**2).sum()
     r2 = SSR/SST
     adjustR2 = 1 - (1-r2)*(data.shape[0] - 1)/(data.shape[0] -model_k -1)
+    
     RMSE = (SSE/(data.shape[0] -model_k -1))**0.5
     return adjustR2, RMSE
 

@@ -12,7 +12,12 @@ data = {'a': np.arange(50),
 data['b'] = data['a'] + 10 * np.random.randn(50)
 data['d'] = np.abs(data['d']) * 100
 
-plt.scatter('a', 'b', c='c', s='d', data=data)
+#plt.scatter('a', 'b', c='c', s='d', data=data)
+plt.scatter('a','b', data=data)
 plt.xlabel('entry a')
 plt.ylabel('entry b')
 plt.show()
+
+a = np.array([[1,2],[3,4],[5,6]]) 
+b = np.array([[11,12],[13,14]]) 
+print(np.dot(b,a))

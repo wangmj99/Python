@@ -9,7 +9,8 @@ dice = pd.DataFrame({'Col1':[1,2,3,4,5,6]})
 
 print(dice.sample(2, replace = True).sum())
 
-results = [dice.sample(2, replace=True ).sum()[0] for i in range(5000)]
+results = [dice.sample(3, replace=True ).sum()[0] for i in range(5000)]
+
 
 
 freq = pd.DataFrame({'Col':results})['Col'].value_counts()
@@ -64,7 +65,7 @@ plt.plot(density['x'], density['cdf'], color='green')
 #plt.show()
 
 z= (ms['LogReturn']-mu)/sigma
-#stats.probplot(z, dist='norm', plot = plt )
+stats.probplot(z, dist='norm', plot = plt )
 plt.show()
 
 prob_return1 = stats.norm.cdf(-0.4, mu*220, sigma*(220**0.5))
