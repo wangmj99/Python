@@ -40,9 +40,7 @@ class BuyHoldwithMovingAvg(Strategy):
                 row['hold1'] = 0 
                 row['hold2'] = 1
         
-        #df.to_csv(MarketDataMgr.dataFilePath.format('tmp'))
-
-
+        df.to_csv(MarketDataMgr.dataFilePath.format('tmp'))
 
 testcase = BuyHoldwithMovingAvg('spy', 'tlt', 50)
 testcase.backTest(datetime(2015,2,1), datetime(2016,12,31))
