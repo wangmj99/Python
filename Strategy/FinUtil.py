@@ -19,15 +19,15 @@ class PerfMeasure:
 
  
 class Strategy(ABC):
-    @abstractmethod
+    #@abstractmethod
     #Abstract method  stock price time series and generate long/short position
     def generateSingleEquityPosition(self, df: pd.Series) -> pd.Series:
         pass
     
-    @abstractmethod
+    #@abstractmethod
     #Abstract method take list of stock price time series and generate position for each stock
     #return dataframe for each stock with position of time series
-    def generateFullPosition(self, df: pd.DataFrame) -> pd.DataFrame:
+    def generateMultipleEquityPosition(self, df: pd.DataFrame) -> pd.DataFrame:
         pass
 
 def getPnlFromPriceAndPosition(prices: pd.Series, positions:pd.Series) -> pd.Series:
@@ -93,7 +93,7 @@ def getPortfolioDailyPnlByPriceAndWeight(prices: list, weights: list)->pd.Series
     return res
 
 #Take a list of equity history data as csv files and output adjust close in dataframe format
-def generateEquityAdjCloseTable(symbols: list, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
+def retreiveEquityAdjCloseTable(symbols: list, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
     path = MarketDataMgr.dataFilePath
     closePriceLabel = 'Adj Close'
     res = None
