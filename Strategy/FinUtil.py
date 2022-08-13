@@ -1,4 +1,5 @@
 from datetime import datetime
+from socket import INADDR_MAX_LOCAL_GROUP
 from typing import Tuple
 import pandas as pd
 import math
@@ -86,12 +87,20 @@ def getPortfolioDailyNAVByPriceAndFixedWeight(prices: list, weights: list)->pd.S
 # input list of price series represent multiple stock prices, share weights series for each stock weight in porfolio
 # both prices and weights have the same datetime index
 def getPortfolioDailyNAVByPriceAndDynWeight(prices: list, weights: list)->pd.Series:
-    pass
+    nav = []
+    index = prices[0].index
+    for idx in index:
+        val = 0
+        for j in range(len(prices)):
+            val+= prices[j][idx]*weights[j][idx]
+        nav.append(val)
     
-
+    res = pd.Series(nav)
+    res.index = index
+    return res
     
 # input list of price series represent multiple stock prices, share weights for each stock weight in porfolio
-def getPortfolioDailyPnlByPriceAndWeight(prices: list, weights: list)->pd.Series:
+def getPortfolioDailyPnlByPriceAndFixedWeight(prices: list, weights: list)->pd.Series:
     if len(prices)!=len(weights): return None
 
     nav = getPortfolioDailyNAVByPriceAndFixedWeight(prices, weights)
@@ -127,3 +136,7 @@ def genereateRollingZscore(srs: pd.Series, window: int):
     z = (srs-m)/s
     return z
 
+s1 = pd.Series([1,2,3,4,5])
+s2 = pd.Series([30,10,20,10,50])
+w1 = pd.Series([1,1,0,0,1])
+w2 = pd.Series([0,0,1,1,0])
