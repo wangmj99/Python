@@ -43,14 +43,14 @@ def getDailyPnl(prices: pd.Series)->pd.Series:
     res = prices.pct_change().fillna(0)
     return res
 
-#get cummulative return, max and max drawdown
+#get cummulative return, max and max drawdown from daily return
 def getPnlSummary(pnl: pd.Series) -> pd.DataFrame:
 
     df = pd.DataFrame({'pnl': pnl})
-    df['cumsum'] = (1+df['pnl']).cumprod()-1
+    df['cumret'] = (1+df['pnl']).cumprod()-1
 
-    df['cummax'] = df['cumsum'].cummax()
-    df['drawdown'] = (df['cumsum'] - df['cummax'])/(1+df['cummax'])
+    df['cummax'] = df['cumret'].cummax()
+    df['drawdown'] = (df['cumret'] - df['cummax'])/(1+df['cummax'])
     vallist  = [ ]
     for v in df['drawdown'].values:
         if len(vallist) == 0: vallist.append(0)
@@ -136,7 +136,25 @@ def genereateRollingZscore(srs: pd.Series, window: int):
     z = (srs-m)/s
     return z
 
-s1 = pd.Series([1,2,3,4,5])
+#Get daily return from cummulative return
+def getDailyRetFromCumRet(cumRet: pd.Series)->pd.Series:
+    dailyRet = []
+    for i in range(len(cumRet)):
+        if i == 0:
+            dailyRet.append(cumRet.iloc[i])
+            continue
+        val = (cumRet.iloc[i]-cumRet.iloc[i-1])/(1+cumRet.iloc[i-1])
+        dailyRet.append(val)
+    res = pd.Series(dailyRet)
+    res.index = cumRet.index
+    return res
+        
+
+
+
+s1 = pd.Series([0,0.1,0.08,0.09,0.12,0.10])
 s2 = pd.Series([30,10,20,10,50])
 w1 = pd.Series([1,1,0,0,1])
 w2 = pd.Series([0,0,1,1,0])
+
+print(getDailyRetFromCumRet(s1))

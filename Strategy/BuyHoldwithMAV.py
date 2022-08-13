@@ -1,6 +1,7 @@
 from FinUtil import *
 from MarketDataMgr import *
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 """
 Long stock1 if above moving average, long stock2 if stock1 is below moving average
@@ -31,6 +32,11 @@ class BuyHoldwithMovingAvg(Strategy):
         df = df.dropna()
         df['hold1']=0.0
         df['hold2']=0.0
+
+        df['s1ret'] = df[self.stock1].pct_change().fillna(0)
+        df['s2ret'] = df[self.stock2].pct_change().fillna(0)
+
+        df['dailyRet'] = 0.0
         
         for index, row in df.iterrows():
             if row['PreClose']- row['MVG']>=0:
@@ -39,11 +45,26 @@ class BuyHoldwithMovingAvg(Strategy):
             else: 
                 row['hold1'] = 0 
                 row['hold2'] = 1
-        
+            row['dailyRet'] = row['hold1']*row['s1ret'] + row['hold2']*row['s2ret'] 
+            
+      
         df.to_csv(MarketDataMgr.dataFilePath.format('tmp'))
 
-testcase = BuyHoldwithMovingAvg('spy', 'tlt', 50)
-testcase.backTest(datetime(2015,2,1), datetime(2016,12,31))
+        perf1 = getPnlSummary(df['dailyRet'])
+        perf1['cumsum'].plot()
+        
+        perf2 = getPnlSummary(df['s1ret'])
+        perf2['cumsum'].plot()
+
+        plt.show()
+        perf = PerfMeasure.getPerf(df['dailyRet'])
+        print(perf.sharpie, perf.mean)
+        perf2 = PerfMeasure.getPerf(df['s1ret'])
+        print(perf2.sharpie, perf2.mean)
+
+
+testcase = BuyHoldwithMovingAvg('spy', 'tlt', 120, 2)
+testcase.backTest(datetime(2012,2,1), datetime(2016,12,31))
 
 
 
