@@ -69,7 +69,7 @@ def getSeriesIntersectByIndex(s1: pd.Series, s2: pd.Series) -> tuple():
         return (s1[ixs], s2[ixs])
 
 # input list of price series represent multiple stock prices, share weights for each stock weight in porfolio
-def getPortfolioDailyNAVByPriceAndWeight(prices: list, weights: list)->pd.Series:
+def getPortfolioDailyNAVByPriceAndFixedWeight(prices: list, weights: list)->pd.Series:
     if len(prices)!=len(weights): return None
 
     nav = []
@@ -82,12 +82,19 @@ def getPortfolioDailyNAVByPriceAndWeight(prices: list, weights: list)->pd.Series
     res = pd.Series(nav)
     res.index = prices[0].index
     return res
+
+# input list of price series represent multiple stock prices, share weights series for each stock weight in porfolio
+# both prices and weights have the same datetime index
+def getPortfolioDailyNAVByPriceAndDynWeight(prices: list, weights: list)->pd.Series:
+    pass
+    
+
     
 # input list of price series represent multiple stock prices, share weights for each stock weight in porfolio
 def getPortfolioDailyPnlByPriceAndWeight(prices: list, weights: list)->pd.Series:
     if len(prices)!=len(weights): return None
 
-    nav = getPortfolioDailyNAVByPriceAndWeight(prices, weights)
+    nav = getPortfolioDailyNAVByPriceAndFixedWeight(prices, weights)
     res = getDailyPnl(nav)
 
     return res
