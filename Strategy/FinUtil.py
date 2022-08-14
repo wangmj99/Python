@@ -6,6 +6,7 @@ import math
 from abc import ABC,abstractmethod
 import os.path
 from MarketDataMgr import *
+import matplotlib.pyplot as plt
 
 class PerfMeasure:
     
@@ -149,7 +150,27 @@ def getDailyRetFromCumRet(cumRet: pd.Series)->pd.Series:
     res.index = cumRet.index
     return res
         
+def plotTwoYAxis(group1:list, group2:list):
+    fig, ax = plt.subplots()
+    for i in range(len(group1)):
+        ser = group1[i]
+        if i == 0:
+            ax.plot(ser, color = 'pink')
+        else:
+            ax.plot(ser)
+    ax.tick_params(axis='y', labelcolor='red')
 
+    ax2 = ax.twinx()
+    for i in range(len(group2)):
+        ser = group2[i]
+        if i == 0:
+            ax2.plot(ser, color = 'green')
+        else : 
+            ax2.plot(ser)
+    #ax2.set_yscale('log')
+    ax2.tick_params(axis='y', labelcolor='green')
+
+    plt.show()
 
 
 s1 = pd.Series([0,0.1,0.08,0.09,0.12,0.10])

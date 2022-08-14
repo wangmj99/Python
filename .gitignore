@@ -1,4 +1,10 @@
+data/
+Strategy/__pycache__/
 data/SPY.csv
 data/TLT.csv
 data/tmp.csv
 data/tmp2.csv
+data/SPY2.csv
+Strategy/__pycache__/FinUtil.cpython-39.pyc
+
+

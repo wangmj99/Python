@@ -43,28 +43,24 @@ class BuyHoldwithMovingAvg(Strategy):
                 row['hold1'] = 1*self.leverage
                 row['hold2'] = 0
             else: 
-                row['hold1'] = 0 
+                row['hold1'] = 0
                 row['hold2'] = 1
             row['dailyRet'] = row['hold1']*row['s1ret'] + row['hold2']*row['s2ret'] 
             
       
         df.to_csv(MarketDataMgr.dataFilePath.format('tmp'))
+        dailypnl = getPnlSummary(df['dailyRet'])
 
-        perf1 = getPnlSummary(df['dailyRet'])
-        perf1['cumsum'].plot()
+        plotTwoYAxis([df['MVG'],df[self.stock1]], [dailypnl['cumret']])
         
-        perf2 = getPnlSummary(df['s1ret'])
-        perf2['cumsum'].plot()
-
-        plt.show()
-        perf = PerfMeasure.getPerf(df['dailyRet'])
-        print(perf.sharpie, perf.mean)
+        perf1 = PerfMeasure.getPerf(df['dailyRet'])
+        print(perf1.sharpie, perf1.mean)
         perf2 = PerfMeasure.getPerf(df['s1ret'])
         print(perf2.sharpie, perf2.mean)
 
 
-testcase = BuyHoldwithMovingAvg('spy', 'tlt', 120, 2)
-testcase.backTest(datetime(2012,2,1), datetime(2016,12,31))
+testcase = BuyHoldwithMovingAvg('spy', 'tlt', 120, 1)
+testcase.backTest(datetime(2007,1,1), datetime(2015,12,31))
 
 
 
