@@ -32,17 +32,6 @@ myvar = pd.DataFrame(mydataset)
 
 
 
-df = pd.read_csv('./data/data.csv')
-dfcorr = df.corr()
-print(type(dfcorr))
-print(dfcorr)
-#print(df['Mix'].mean())
-#print(df['Mix'].std())
-
-#print(df['Equity'].mean())
-#print(df['Equity'].std())
-df['Duration'].plot(kind = 'hist')
-##plt.show()
 
 nums = [i for i in range(1,1001)]
 string = "Practice Problems to Drill List Comprehension in Your Head."
@@ -117,5 +106,12 @@ if df2 is None: df2 = pd.DataFrame(list1)
 df2 = pd.concat([df2,  list2, list4], axis=1)
 print(df2)
 
-end = datetime.strptime('10/1/2021', '%m/%d/%Y')
-print((end - datetime(1970,1,1)).days*24*60*60)
+df2['col4']=0.0
+preItem = None
+for index, row in df2.iterrows():
+  if preItem is None:
+    row['col4'] = 0.0
+  else:
+    row['col4'] = preItem['col3']+1
+  preItem = row
+print(df2)
