@@ -169,17 +169,15 @@ def plotTwoYAxis(group1:list, group2:list):
 
     plt.show()
 
-# input list of price series represent multiple stock prices, portfolio weights (pct, add to 100%) series for each stock.
-# weight series contain the weights update for each buy/sell transactions, value set zero if there is no changes from previous day.
-# eg. portfolio weights change from day1 to day3, weithgs series should be  day1: 20%, 0%, 80% , day2: 0, 0 ,0, day3: 50%, 10%,40%
+# input list of price series represent multiple stock prices and  portfolio weights (pct, add to 100%) series for each stock.
+# weight series only contain the weights update for each buy/sell transactions.
+# eg. portfolio weights change at day1 and day3, weithgs series should be  day1: 20%, 0%, 80% , day3: 50%, 10%,40%, there is no entry for day2
 def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame):
-    #1. Check when portfolio is updated, 1 for update, 0 for no change, -1 for error
+
     #wgts['total'] = wgts.sum(axis=1)
     #lm = lambda x: 1 if abs(1- x['total'])<=0.001 else (0 if abs(x['total'])<=0.001 else -1)
 
-    #lm = lambda x: 1 if abs(1- x.sum())<=0.001 else (0 if abs(x.sum())<=0.001 else -1)
-    #wgts['update'] = wgts.apply(lm, axis= 1)
-    lastUpdate= {} #price and weight at last update
+    lastUpdate= {} #dictionary contains price and weight at last update
     cumRetBeforeLastUpdate = 0
     symbols = list(prices.columns)
 
@@ -220,11 +218,12 @@ def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame):
     idxLoc = prices.index.get_loc(firstIdx)
     cumRet.index = prices.index[idxLoc:]
     res = getDailyPnlFromCumReturn(cumRet)
+    """
     tmpPD = pd.concat([prices, cumRet], axis = 1, join = 'inner')
     tmpPD = pd.concat([tmpPD, res], axis = 1, join = 'inner')
     tmpPD.to_csv('./data/tmpPD.csv')
+    """
 
-    
     return res
                 
 p = pd.read_csv('./data/price.csv', index_col= 0)
