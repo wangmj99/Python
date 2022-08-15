@@ -90,28 +90,29 @@ b = np.array([[8],[-11],[-3]])
 
 #print (np.linalg.solve(A, b))
 
-list1 = pd.Series([1,2,3]).rename('col1')
+list1 = pd.Series([10,20,30]).rename('col1')
 list1.index = ['a', 'b', 'c']
 list2 = pd.Series([20,30,40]).rename('col2')
-list2.index = ['a', 'b', 'd']
-list4 = pd.Series([10,320,420]).rename('col3')
-list4.index = ['a', 'e', 'd']
-list3 = pd.Series([x*y for x,y in zip(list1, list2)])
-list3.index = ['a', 'b', 'c']
+list2.index = ['a', 'b', 'c']
+list4 = pd.Series([30,50,420]).rename('col3')
+list4.index = ['a', 'b', 'c']
+
 
 df2 = None
 if df2 is None: df2 = pd.DataFrame(list1)
 
 
 df2 = pd.concat([df2,  list2, list4], axis=1)
-print(df2)
 
-df2['col4']=0.0
-preItem = None
-for index, row in df2.iterrows():
-  if preItem is None:
-    row['col4'] = 0.0
-  else:
-    row['col4'] = preItem['col3']+1
-  preItem = row
-print(df2)
+#df2['total'] = df2.sum(axis=1)
+print (df2)
+#lm = lambda x: x.sum()
+lm = lambda x: 1 if abs(100- x.sum())<0.001 else (0 if x.sum()<100 else -1)
+df2['update'] = df2.apply(lm, axis= 1)
+
+
+
+
+
+print (df2.index[0])
+

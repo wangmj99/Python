@@ -11,15 +11,32 @@ import matplotlib.pyplot as plt
 class PerfMeasure:
     
     @staticmethod
-    def getPerf(dailyPnl, period = 252):
+    def getPerfStatsFromDailyPnl(dailyPnl, period = 252):
         perf = PerfMeasure()
         perf.mean = dailyPnl.mean()
         perf.std = dailyPnl.std()
         perf.sharpie = math.sqrt(period)*perf.mean/perf.std
+
+        df = pd.DataFrame({'pnl': dailyPnl})
+        df['cumret'] = (1+df['pnl']).cumprod()-1
+
+        df['cummax'] = df['cumret'].cummax()
+        df['drawdown'] = (df['cumret'] - df['cummax'])/(1+df['cummax'])
+        vallist  = [ ]
+        for v in df['drawdown'].values:
+            if len(vallist) == 0: vallist.append(0)
+            elif v == 0:
+                vallist.append(0)
+            else:
+                vallist.append(vallist[-1]+1)
+        drawdays = pd.Series(vallist)
+        drawdays.index = df['drawdown'].index
+        df['drawdowndays'] = drawdays
+
+        perf.statsTable = df
+
         return perf
 
-
- 
 class Strategy(ABC):
     #@abstractmethod
     #Abstract method  stock price time series and generate long/short position
@@ -32,7 +49,7 @@ class Strategy(ABC):
     def generateMultipleEquityPosition(self, df: pd.DataFrame) -> pd.DataFrame:
         pass
 
-def getPnlFromPriceAndPosition(prices: pd.Series, positions:pd.Series) -> pd.Series:
+def getDailyPnlFromPriceAndPosition(prices: pd.Series, positions:pd.Series) -> pd.Series:
     ret = prices.pct_change()
     ret = ret.fillna(0)
 
@@ -40,29 +57,9 @@ def getPnlFromPriceAndPosition(prices: pd.Series, positions:pd.Series) -> pd.Ser
     pnl.index = prices.index
     return pnl
 
-def getDailyPnl(prices: pd.Series)->pd.Series:
+def getDailyPnlFromPrice(prices: pd.Series)->pd.Series:
     res = prices.pct_change().fillna(0)
     return res
-
-#get cummulative return, max and max drawdown from daily return
-def getPnlSummary(pnl: pd.Series) -> pd.DataFrame:
-
-    df = pd.DataFrame({'pnl': pnl})
-    df['cumret'] = (1+df['pnl']).cumprod()-1
-
-    df['cummax'] = df['cumret'].cummax()
-    df['drawdown'] = (df['cumret'] - df['cummax'])/(1+df['cummax'])
-    vallist  = [ ]
-    for v in df['drawdown'].values:
-        if len(vallist) == 0: vallist.append(0)
-        elif v == 0:
-            vallist.append(0)
-        else:
-            vallist.append(vallist[-1]+1)
-    drawdays = pd.Series(vallist)
-    drawdays.index = df['drawdown'].index
-    df['drawdowndays'] = drawdays
-    return df
 
 def getSeriesIntersectByIndex(s1: pd.Series, s2: pd.Series) -> tuple():
     ixs = s1.index.intersection(s2.index)
@@ -71,7 +68,7 @@ def getSeriesIntersectByIndex(s1: pd.Series, s2: pd.Series) -> tuple():
         return (s1[ixs], s2[ixs])
 
 # input list of price series represent multiple stock prices, share weights for each stock weight in porfolio
-def getPortfolioDailyNAVByPriceAndFixedWeight(prices: list, weights: list)->pd.Series:
+def getPortfolioDailyNAVByPriceAndFixedPosition(prices: list, weights: list)->pd.Series:
     if len(prices)!=len(weights): return None
 
     nav = []
@@ -87,7 +84,7 @@ def getPortfolioDailyNAVByPriceAndFixedWeight(prices: list, weights: list)->pd.S
 
 # input list of price series represent multiple stock prices, share weights series for each stock weight in porfolio
 # both prices and weights have the same datetime index
-def getPortfolioDailyNAVByPriceAndDynWeight(prices: list, weights: list)->pd.Series:
+def getPortfolioDailyNAVByPriceAndDynPosition(prices: list, weights: list)->pd.Series:
     nav = []
     index = prices[0].index
     for idx in index:
@@ -101,11 +98,11 @@ def getPortfolioDailyNAVByPriceAndDynWeight(prices: list, weights: list)->pd.Ser
     return res
     
 # input list of price series represent multiple stock prices, share weights for each stock weight in porfolio
-def getPortfolioDailyPnlByPriceAndFixedWeight(prices: list, weights: list)->pd.Series:
+def getPortfolioDailyPnlByPriceAndFixedPosition(prices: list, weights: list)->pd.Series:
     if len(prices)!=len(weights): return None
 
-    nav = getPortfolioDailyNAVByPriceAndFixedWeight(prices, weights)
-    res = getDailyPnl(nav)
+    nav = getPortfolioDailyNAVByPriceAndFixedPosition(prices, weights)
+    res = getDailyPnlFromPrice(nav)
 
     return res
 
@@ -138,7 +135,7 @@ def genereateRollingZscore(srs: pd.Series, window: int):
     return z
 
 #Get daily return from cummulative return
-def getDailyRetFromCumRet(cumRet: pd.Series)->pd.Series:
+def getDailyPnlFromCumReturn(cumRet: pd.Series)->pd.Series:
     dailyRet = []
     for i in range(len(cumRet)):
         if i == 0:
@@ -172,10 +169,73 @@ def plotTwoYAxis(group1:list, group2:list):
 
     plt.show()
 
+# input list of price series represent multiple stock prices, portfolio weights (pct, add to 100%) series for each stock.
+# weight series contain the weights update for each buy/sell transactions, value set zero if there is no changes from previous day.
+# eg. portfolio weights change from day1 to day3, weithgs series should be  day1: 20%, 0%, 80% , day2: 0, 0 ,0, day3: 50%, 10%,40%
+def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame):
+    #1. Check when portfolio is updated, 1 for update, 0 for no change, -1 for error
+    #wgts['total'] = wgts.sum(axis=1)
+    #lm = lambda x: 1 if abs(1- x['total'])<=0.001 else (0 if abs(x['total'])<=0.001 else -1)
 
-s1 = pd.Series([0,0.1,0.08,0.09,0.12,0.10])
-s2 = pd.Series([30,10,20,10,50])
-w1 = pd.Series([1,1,0,0,1])
-w2 = pd.Series([0,0,1,1,0])
+    #lm = lambda x: 1 if abs(1- x.sum())<=0.001 else (0 if abs(x.sum())<=0.001 else -1)
+    #wgts['update'] = wgts.apply(lm, axis= 1)
+    lastUpdate= {} #price and weight at last update
+    cumRetBeforeLastUpdate = 0
+    symbols = list(prices.columns)
 
-print(getDailyRetFromCumRet(s1))
+    firstIdx = wgts.index[0]
+    prices = prices[firstIdx: ]
+
+    pnl = []
+    for index, row in prices.iterrows():
+        tmpPnl = 0
+        if index in wgts.index:
+            #find update
+            if len(pnl) == 0: #first row     
+                for symbol in symbols:
+                    lastUpdate[symbol] = (row[symbol], wgts[symbol][index])
+                cumRetBeforeLastUpdate = 0
+                pnl.append(0)
+            else :
+                for symbol in symbols:
+                    w = lastUpdate[symbol][1]
+                    p = lastUpdate[symbol][0]
+                    tmpPnl += w*(row[symbol]/p-1)
+                
+                currRet = (1+cumRetBeforeLastUpdate)*(1+tmpPnl)-1
+                pnl.append(currRet)
+
+                for symbol in symbols:
+                    lastUpdate[symbol] = (row[symbol], wgts[symbol][index])
+                cumRetBeforeLastUpdate = currRet
+                
+        else:
+            for symbol in symbols:
+                    w = lastUpdate[symbol][1]
+                    p = lastUpdate[symbol][0]
+                    tmpPnl += w*(row[symbol]/p-1)
+            currRet = (1+cumRetBeforeLastUpdate)*(1+tmpPnl)-1
+            pnl.append(currRet)
+    cumRet = pd.Series(pnl).rename('cumRet')
+    idxLoc = prices.index.get_loc(firstIdx)
+    cumRet.index = prices.index[idxLoc:]
+    res = getDailyPnlFromCumReturn(cumRet)
+    tmpPD = pd.concat([prices, cumRet], axis = 1, join = 'inner')
+    tmpPD = pd.concat([tmpPD, res], axis = 1, join = 'inner')
+    tmpPD.to_csv('./data/tmpPD.csv')
+
+    
+    return res
+                
+p = pd.read_csv('./data/price.csv', index_col= 0)
+p.index = pd.to_datetime(p.index)
+w = pd.read_csv('./data/weight.csv', index_col= 0)
+w.index = pd.to_datetime(w.index)
+GetDailyPnlFromPriceAndWeightChg(p,w)
+
+
+
+
+        
+
+    

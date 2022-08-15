@@ -69,13 +69,14 @@ class BuyHoldwithMovingAvg(Strategy):
             
       
         df.to_csv(MarketDataMgr.dataFilePath.format('tmp'))
-        dailypnl = getPnlSummary(df['dailyRet'])
 
-        plotTwoYAxis([df['MVG'],df[self.stock1]], [dailypnl['cumret']])
         
-        perf1 = PerfMeasure.getPerf(df['dailyRet'])
+        perf1 = PerfMeasure.getPerfStatsFromDailyPnl(df['dailyRet'])
         print(perf1.sharpie, perf1.mean)
-        perf2 = PerfMeasure.getPerf(df['s1ret'])
+        plotTwoYAxis([df['MVG'],df[self.stock1]], [perf1.statsTable['cumret']])
+
+
+        perf2 = PerfMeasure.getPerfStatsFromDailyPnl(df['s1ret'])
         print(perf2.sharpie, perf2.mean)
 
     def setRowVal(self, row):
