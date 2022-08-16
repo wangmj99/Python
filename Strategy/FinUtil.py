@@ -9,15 +9,17 @@ from MarketDataMgr import *
 import matplotlib.pyplot as plt
 
 class PerfMeasure:
-    
-    @staticmethod
-    def getPerfStatsFromDailyPnl(dailyPnl, period = 252):
-        perf = PerfMeasure()
-        perf.mean = dailyPnl.mean()
-        perf.std = dailyPnl.std()
-        perf.sharpie = math.sqrt(period)*perf.mean/perf.std
+    def __init__(self,dailyPnl:pd.Series) -> None:
+        self.dailyPnl = dailyPnl
 
-        df = pd.DataFrame({'pnl': dailyPnl})
+
+    #@staticmethod
+    def getPerfStatsFromDailyPnl(self, period = 252):
+        self.mean = self.dailyPnl.mean()
+        self.std = self.dailyPnl.std()
+        self.sharpie = math.sqrt(period)*self.mean/self.std
+
+        df = pd.DataFrame({'pnl': self.dailyPnl})
         df['cumret'] = (1+df['pnl']).cumprod()-1
 
         df['cummax'] = df['cumret'].cummax()
@@ -33,9 +35,7 @@ class PerfMeasure:
         drawdays.index = df['drawdown'].index
         df['drawdowndays'] = drawdays
 
-        perf.statsTable = df
-
-        return perf
+        self.statsTable = df
 
 class Strategy(ABC):
     #@abstractmethod
