@@ -112,7 +112,7 @@ def retreiveEquityAdjCloseTable(symbols: list, startDate: datetime, endDate:date
     closePriceLabel = 'Adj Close'
     res = None
     for symbol in symbols:
-        md = MarketDataMgr.retrieveHistoryData([symbol], startDate, endDate)
+        md = MarketDataMgr.retrieveHistoryDataToCSV([symbol], startDate, endDate)
         name= md[str.upper(symbol)]
         df = pd.read_csv(name, index_col=0)
         df.index = pd.to_datetime(df.index)

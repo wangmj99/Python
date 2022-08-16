@@ -17,13 +17,10 @@ def calcHedgeDrawDown():
     s1df= df[s1].pct_change()
     s2df= df[s2].pct_change()
     hedge = (s1df.dropna()-s2df.dropna())
-
-    res = getPnlSummary(hedge)
     
     perf= PerfMeasure.getPerfStatsFromDailyPnl(hedge)
     print(perf.sharpie)
-    print(res)
-    res['cumsum'].plot()
+    perf.statsTable['cumsum'].plot()
     plt.show()
 
 def pairTrading(s1:str, s2:str, startDate: datetime, endDate:datetime):
@@ -43,14 +40,14 @@ def pairTrading(s1:str, s2:str, startDate: datetime, endDate:datetime):
     train_posSeries = CreatePairTradingPositionByZscore(train_nav)
     train_pnl = getDailyPnlFromPriceAndPosition(train_nav, train_posSeries)
     train_perf = PerfMeasure.getPerfStatsFromDailyPnl(train_pnl)
-    train_pnldf = getPnlSummary(train_pnl)
+    train_pnldf = train_perf.statsTable
 
     test_nav = getPortfolioDailyNAVByPriceAndFixedPosition([test[s1], test[s2]], [1, -lm.params[1]])
     test_zscore = (test_nav - test_nav.mean())/test_nav.std()
     test_posSeries = CreatePairTradingPositionByZscore(test_nav)
     test_pnl = getDailyPnlFromPriceAndPosition(test_nav, test_posSeries)
     test_perf = PerfMeasure.getPerfStatsFromDailyPnl(test_pnl)
-    test_pnldf = getPnlSummary(test_pnl)
+    test_pnldf = test_perf.statsTable
 
     print('train: sharpie:{}, mean: {}, std: {}'.format(train_perf.sharpie, train_perf.mean, train_perf.std))
     print('test : sharpie:{}, mean: {}, std: {}'.format(test_perf.sharpie, test_perf.mean, test_perf.std))

@@ -6,7 +6,7 @@ class MarketDataMgr:
     dataFileFolder = './data'
     dataFilePath = os.path.join(dataFileFolder, '{}.csv')
     @staticmethod
-    def retrieveHistoryData(symbols: list, startDate: datetime, endDate: datetime)-> str:
+    def retrieveHistoryDataToCSV(symbols: list, startDate: datetime, endDate: datetime)-> str:
         url = 'https://query1.finance.yahoo.com/v7/finance/download/{0}?period1={1}&period2={2}&interval=1d&events=history&includeAdjustedClose=true'
 
         base = datetime(1970,1,1)
@@ -30,4 +30,4 @@ class MarketDataMgr:
     def retrieveHistoryDataStr(symbols: list, startDate: str, endDate: str)-> str:
         start = datetime.strptime(startDate, '%m/%d/%Y')
         end = datetime.strptime(endDate, '%m/%d/%Y')
-        return MarketDataMgr.retrieveHistoryData(list, start, end)
+        return MarketDataMgr.retrieveHistoryDataToCSV(list, start, end)

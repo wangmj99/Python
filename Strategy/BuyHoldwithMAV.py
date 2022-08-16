@@ -15,6 +15,7 @@ class BuyHoldwithMovingAvg(Strategy):
         self.leverage = leverage
         self.cooldowndays = cooldowndays  #cooldowndays after previous trade, to avoid frequent trades
         self.daysSinceLastTrade = 0
+        self.lastTradePrice = () #tuple to record last trade stock1 price and stock1 moving avg
         
 
     def backTest(self, startDate: datetime, endDate: datetime):
@@ -30,44 +31,27 @@ class BuyHoldwithMovingAvg(Strategy):
         rolling = df[self.stock1].rolling(self.window)
         mvg = rolling.mean().shift(1) 
         df['MVG'] = mvg
-        df['PreClose'] = df[self.stock1].shift(1)
+        #df['PreClose'] = df[self.stock1].shift(1)
         df = df.dropna()
-        df['hold1']=0.0
-        df['hold2']=0.0
-
-        df['s1ret'] = df[self.stock1].pct_change().fillna(0)
-        df['s2ret'] = df[self.stock2].pct_change().fillna(0)
-
-        df['dailyRet'] = 0.0
         
+        wts = pd.DataFrame(columns=[self.stock1, self.stock2])
 
-        """
-        1. if first row: set val count+1
-        2. if <= cooldown:  copy previous row, count+1
-        3. if >cooldown: 
-            if val same as previous day count+1
-            if val different, reset count
-        """
-        preRow = None
         for index, row in df.iterrows():
-            if preRow is None:  # first Row
-                self.setRowVal(row)
-                self.daysSinceLastTrade =1
-            else:
-                if self.daysSinceLastTrade <= self.cooldowndays: # still in cooldownday
-                    row['hold1'] = preRow['hold1']
-                    row['hold2'] = preRow['hold2']
-                    self.daysSinceLastTrade +=1
-                else:               # not in cooldownday, check if value changed
-                    self.setRowVal(row)
-                    if row['hold1'] == preRow['hold1']: 
-                        self.daysSinceLastTrade+=1
-                    else: 
-                        self.daysSinceLastTrade =1
-            preRow = row           
-            row['dailyRet'] = row['hold1']*row['s1ret'] + row['hold2']*row['s2ret'] 
-            
-      
+            if len(self.lastTradePrice) >0  and self.daysSinceLastTrade <= self.cooldowndays: # still in cooldownday:
+                self.daysSinceLastTrade +=1
+                continue
+
+            if row[self.stock1] >= row['MVG'] and (len(self.lastTradePrice) ==0 or self.lastTradePrice[0] < self.lastTradePrice[1]):
+                wts.loc[index] = [1*self.leverage, 0]
+            elif row[self.stock1] < row['MVG'] and (len(self.lastTradePrice) ==0 or self.lastTradePrice[0] >= self.lastTradePrice[1]):
+                wts.loc[index] = [0, 1]
+            self.daysSinceLastTrade = 1
+            self.lastTradePrice=(row[self.stock1], row['MVG'])
+        
+        dailyRet= GetDailyPnlFromPriceAndWeightChg(df[[self.stock1, self.stock2]], wts).rename('dailyRet')
+        df=pd.concat([df, dailyRet], axis = 1, join = 'inner')
+
+        wts.to_csv(MarketDataMgr.dataFilePath.format('tmp_wts'))                
         df.to_csv(MarketDataMgr.dataFilePath.format('tmp'))
 
         
@@ -75,20 +59,11 @@ class BuyHoldwithMovingAvg(Strategy):
         print(perf1.sharpie, perf1.mean)
         plotTwoYAxis([df['MVG'],df[self.stock1]], [perf1.statsTable['cumret']])
 
-
-        perf2 = PerfMeasure.getPerfStatsFromDailyPnl(df['s1ret'])
+        perf2 = PerfMeasure.getPerfStatsFromDailyPnl(df[self.stock1].pct_change().fillna(0))
         print(perf2.sharpie, perf2.mean)
 
-    def setRowVal(self, row):
-        if row['PreClose']- row['MVG']>=0:
-            row['hold1'] = 1*self.leverage
-            row['hold2'] = 0
-        else: 
-            row['hold1'] = 0
-            row['hold2'] = 1
-
-testcase = BuyHoldwithMovingAvg('spy', 'tlt', 50,20, 1)
-testcase.backTest(datetime(2000,1,1), datetime(2022,12,31))
+testcase = BuyHoldwithMovingAvg('spy', 'tlt', 120,20, 2)
+testcase.backTest(datetime(2010,1,1), datetime(2020,12,31))
 
 
 
