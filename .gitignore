@@ -1,4 +1,5 @@
 data/
+logs/
 Strategy/__pycache__/
 data/SPY.csv
 data/TLT.csv
@@ -10,3 +11,4 @@ Strategy/__pycache__/FinUtil.cpython-39.pyc
 
 Strategy/__pycache__/FinUtil.cpython-37.pyc
 
+logs/BuyHoldwithMovingAvg.txt
