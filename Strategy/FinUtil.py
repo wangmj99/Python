@@ -34,8 +34,9 @@ class PerfMeasure:
         drawdays = pd.Series(vallist)
         drawdays.index = df['drawdown'].index
         df['drawdowndays'] = drawdays
-
         self.statsTable = df
+
+        self.totalReturn = df['cumret'][-1]
 
 class Strategy(ABC):
     #@abstractmethod

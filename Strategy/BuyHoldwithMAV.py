@@ -9,7 +9,7 @@ Long stock1 if above moving average, long stock2 if stock1 is below moving avera
 """
 class BuyHoldwithMovingAvg(Strategy):
 
-    logging.basicConfig(filename="./logs/BuyHoldwithMovingAvg.txt", level=logging.INFO,
+    logging.basicConfig(filename="./logs/BuyHoldwithMovingAvg.log", level=logging.INFO,
                     format="%(asctime)s %(message)s", datefmt='%d-%b-%y %H:%M:%S')
 
     def __init__(self, stock1:str, stock2:str, movingWindow=50, cooldowndays = 0, leverage =1):
@@ -67,14 +67,14 @@ class BuyHoldwithMovingAvg(Strategy):
 
         perf1 = PerfMeasure(df['dailyRet'])
         perf1.getPerfStatsFromDailyPnl()
-        logging.info('********************** Strategy sharpie(yearly): {}, mean: {}, std: {}'.format(perf1.sharpie, perf1.mean, perf1.std))
+        logging.info('********************** Strategy sharpie(yearly): {}, mean: {}, std: {}, totalReturn: {:.2%}'.format(perf1.sharpie, perf1.mean, perf1.std, perf1.totalReturn))
         plotTwoYAxis([df['MVG'],df[self.stock1]], [perf1.statsTable['cumret']])
 
         perf2 = PerfMeasure(df[self.stock1].pct_change().fillna(0))
         perf2.getPerfStatsFromDailyPnl()
-        logging.info('********************** Benchmark sharpie(yearly): {}, mean: {}, std: {}'.format(perf2.sharpie, perf2.mean, perf2.std))
+        logging.info('********************** Benchmark sharpie(yearly): {}, mean: {}, std: {}, totalReturn: {:.2%}'.format(perf2.sharpie, perf2.mean, perf2.std, perf2.totalReturn))
 testcase = BuyHoldwithMovingAvg('spy', 'tlt', 50,20, 2)
-testcase.backTest(datetime(2010,1,1), datetime(2020,12,31))
+testcase.backTest(datetime(2022,1,1), datetime(2022,12,31))
 
 
 
