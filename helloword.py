@@ -112,9 +112,9 @@ df2['update'] = df2.apply(lm, axis= 1)
 
 
 
+names = ['col1', 'col3']
 
-
-print (df2[['col1', 'col3']])
+print (df2[names])
 
 print(len((1,2)))
 

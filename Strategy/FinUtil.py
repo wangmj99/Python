@@ -14,7 +14,7 @@ class PerfMeasure:
 
 
     #@staticmethod
-    def getPerfStatsFromDailyPnl(self, period = 252):
+    def getPerfStats(self, period = 252):
         self.mean = self.dailyPnl.mean()
         self.std = self.dailyPnl.std()
         self.sharpie = math.sqrt(period)*self.mean/self.std
