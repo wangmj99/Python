@@ -227,11 +227,6 @@ def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame):
 
     return res
                 
-p = pd.read_csv('./data/price.csv', index_col= 0)
-p.index = pd.to_datetime(p.index)
-w = pd.read_csv('./data/weight.csv', index_col= 0)
-w.index = pd.to_datetime(w.index)
-GetDailyPnlFromPriceAndWeightChg(p,w)
 
 
 

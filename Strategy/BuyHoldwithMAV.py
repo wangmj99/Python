@@ -63,15 +63,11 @@ class BuyHoldwithMAV(BuyHoldRebalanceTemplate):
         plotTwoYAxis([res[BuyHoldwithMAV.mv_label],res[self.symbols[0]]], [perf1.statsTable['cumret']])
 
         if benchmark != None:
-            benchmark = str.upper(benchmark)
-            benchmarkprice = retreiveEquityAdjCloseTable([benchmark], res.index[0], res.index[-1]) 
-            perf2 = PerfMeasure(benchmarkprice[benchmark].pct_change().fillna(0))
-            perf2.getPerfStats()
-            logging.info('********************** Benchmark: {} sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4} totalReturn: {:.2%}'.format(benchmark, perf2.sharpie, perf2.mean, perf2.std, perf2.totalReturn))
+            self.ShowBenchmarkPerformance('spy',res.index[0], res.index[-1])
 
 testcase = BuyHoldwithMAV(['spy', 'tlt'], 20, 1, 50)
 res = testcase.backTest(datetime(2007,1,1), datetime(2022,12,31))
-testcase.ShowPerformance(res, 'spy')
+testcase.ShowPerformance(res, 'SPY')
 
 
 
