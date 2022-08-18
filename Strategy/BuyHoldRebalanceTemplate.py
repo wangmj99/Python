@@ -1,3 +1,4 @@
+from xmlrpc.client import DateTime
 from FinUtil import *
 from MarketDataMgr import *
 from datetime import datetime
@@ -45,8 +46,19 @@ class BuyHoldRebalanceTemplate:
         pass
     
     @abstractmethod
-    def ShowPerformance(self, testResult:pd.DataFrame):
+    def ShowPerformance(self, testResult:pd.DataFrame, benchmark:str = None):
         pass
+
+    def ShowBenchmarkPerformance(self, benchmark:str, startDate: datetime, endDate: DateTime):
+            benchmark = str.upper(benchmark)
+            benchmarkprice = retreiveEquityAdjCloseTable([benchmark], startDate, endDate)
+            tmp = benchmarkprice[benchmark].pct_change().fillna(0)
+            perf = PerfMeasure(tmp)
+            perf.getPerfStats()
+            logging.info('********************** Benchmark: {} sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4} totalReturn: {:.2%}'.format(benchmark, perf.sharpie, perf.mean, perf.std, perf.totalReturn))
+            return perf
+        
+
 
 
 

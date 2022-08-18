@@ -50,6 +50,6 @@ class MultipleAssetPeriodRebalance(BuyHoldRebalanceTemplate):
 
         plotTwoYAxis([res[self.symbols[0]]], [perf1.statsTable['cumret']])
 
-testcase = MultipleAssetPeriodRebalance(['spy', 'ive', 'tlt'], [0.4, 0.3, 0.3], 63, 1)
-res = testcase.backTest(datetime(2007,1,1), datetime(2022,12,31))
+testcase = MultipleAssetPeriodRebalance(['spy','agg'], [0.6, 0.4], 63, 1)
+res = testcase.backTest(datetime(2012,1,1), datetime(2022,12,31))
 testcase.ShowPerformance(res)
