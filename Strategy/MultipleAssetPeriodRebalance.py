@@ -12,10 +12,12 @@ class MultipleAssetPeriodRebalance(BuyHoldRebalanceTemplate):
     def __init__(self, symbols: list, equityRatio: list , cooldowndays=0, leverage=1 ):
         super().__init__(symbols, cooldowndays, leverage)
         self.equityRatio = equityRatio
+
+        if len(symbols) == 0 or len(symbols)!= len(equityRatio):
+            logging.error('equityRation size: {0} does not match input symbol size: {1}'.format(len(equityRatio), len(symbols)))
+            raise ValueError('equityRation size: {0} does not match input symbol size: {1}'.format(len(equityRatio), len(symbols)))
     
     def BuildWeightsTable(self, mkd: pd.DataFrame, wts: pd.DataFrame):
-        s1, b1 = self.symbols[0], self.symbols[1]
-
         for index, row in mkd.iterrows():
             if self.lastTrade.daysSinceLastTrade > 0 and self.lastTrade.daysSinceLastTrade <= self.cooldowndays:
                 self.lastTrade.daysSinceLastTrade+=1
@@ -38,18 +40,16 @@ class MultipleAssetPeriodRebalance(BuyHoldRebalanceTemplate):
                     "".join(wtsStrs))
             )
 
-    def ShowPerformance(self, res: pd.DataFrame):
+    def ShowPerformance(self, res: pd.DataFrame, benchmark: str = None):
         perf1 = PerfMeasure(res[BuyHoldRebalanceTemplate.dailyRet_label])
         perf1.getPerfStats()
         logging.info('********************** Strategy sharpie(yearly): {:.4}, mean: {:.4}, std: {:.4}, totalReturn: {:.2%}'.format(perf1.sharpie, perf1.mean, perf1.std, perf1.totalReturn))
         
-
-        perf2 = PerfMeasure(res[self.symbols[0]].pct_change().fillna(0))
-        perf2.getPerfStats()
-        logging.info('********************** Benchmark sharpie(yearly): {:.4}, mean: {:.4}, std: {:.4} totalReturn: {:.2%}'.format(perf2.sharpie, perf2.mean, perf2.std, perf2.totalReturn))
+        if benchmark != None:
+            self.ShowBenchmarkPerformance(benchmark, res.index[0], res.index[-1])
 
         plotTwoYAxis([res[self.symbols[0]]], [perf1.statsTable['cumret']])
 
-testcase = MultipleAssetPeriodRebalance(['spy','agg'], [0.6, 0.4], 63, 1)
+testcase = MultipleAssetPeriodRebalance(['spy','agg', 'iwm'], [0.6, 0.2, 0.2], 63, 1)
 res = testcase.backTest(datetime(2012,1,1), datetime(2022,12,31))
-testcase.ShowPerformance(res)
+testcase.ShowPerformance(res, 'spy')
