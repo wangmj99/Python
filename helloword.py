@@ -111,9 +111,5 @@ lm = lambda x: 1 if abs(100- x.sum())<0.001 else (0 if x.sum()<100 else -1)
 df2['update'] = df2.apply(lm, axis= 1)
 
 
-
-names = ['col1', 'col3']
-
-def testFunc(name:str = 'abc'):
-  return str.upper(name)
+df3 = df2[['col2', 'col3']]
 

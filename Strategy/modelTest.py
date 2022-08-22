@@ -94,7 +94,62 @@ def CreatePairTradingPositionByZscore(spread):
     return posSeries
 
 
-pairTrading('GLD', 'GDX', datetime(2000,2,1), datetime(2022,9,1))
+def pairTrading2(s1:str, s2:str, startDate: datetime, endDate:datetime, window = 21*3):
+    s1, s2 = str.upper(s1), str.upper(s2)
+    dataSet = retreiveEquityAdjCloseTable([s1, s2], startDate, endDate)
+
+    dataSet['rollingZ'] = 0.0
+    dataSet['spread'] = 0.0
+
+    wts= pd.DataFrame(columns=[s1, s2])
+    upThld, lowThld = 1.65, 0.5
+    oldSignal = 0 # 1 long spread, -1 short spread, 0 no postion
+
+    for t in range(window-1, len(dataSet)):
+        tmpdf = dataSet.iloc[t-window+1:t+1]
+        
+        f = '{}~{}'.format(s1, s2)
+        lm = smf.ols(formula=f, data=tmpdf).fit()
+        
+        tmpSprd = tmpdf[s1]-tmpdf[s2]*lm.params[1]
+        zscore = (tmpSprd[-1] - tmpSprd.mean())/tmpSprd.std()
+
+        idx = dataSet.index.values[t]
+        dataSet.loc[idx, 'rollingZ'] = zscore
+        dataSet.loc[idx, 'spread'] = tmpSprd[-1]
+        
+
+        if oldSignal == 0:
+            if zscore >= upThld:
+                wts.loc[idx] = [-1, 1]
+                oldSignal = -1
+            elif zscore <= -upThld:
+                wts.loc[idx] = [1, -1]
+                oldSignal = 1
+        elif oldSignal == 1:
+            if zscore >=-lowThld:
+                wts.loc[idx] = [0,0]
+                oldSignal = 0
+        else:  # oldsignla = -1
+            if zscore <= lowThld:
+                wts.loc[idx] = [0,0]
+                oldSignal = 0
+
+    wts.to_csv(MarketDataMgr.dataFilePath.format('tmp_wts'))
+    dataSet.to_csv(MarketDataMgr.dataFilePath.format('tmp'))
+    
+    dailyRet= GetDailyPnlFromPriceAndWeightChg(dataSet[[s1, s2]], wts).rename('dailyRet')
+    perf1 = PerfMeasure(dailyRet)
+    perf1.getPerfStats()
+    print('********************** Strategy sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4}, totalReturn: {:.2%}'.format(perf1.sharpie, perf1.mean, perf1.std, perf1.totalReturn))
+    plotTwoYAxis([dataSet['spread']], [perf1.statsTable['cumret']])
+
+
+
+
+
+
+pairTrading2('mdy', 'spy', datetime(2022,3,26), datetime(2022,12,31))
 #calcHedgeDrawDown()
 
 
