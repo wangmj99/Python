@@ -62,7 +62,7 @@ def pairTrading(s1:str, s2:str, startDate: datetime, endDate:datetime):
 def CreatePairTradingPositionByZscore(spread):
     pos = []
     zscore = (spread - spread.mean())/spread.std()
-    zinit, zexit = 0.75, 0.5
+    zinit, zexit = 1.75, 1
     for zval in zscore:
         if len(pos) == 0:
             if zval>=zinit:
@@ -100,6 +100,9 @@ def pairTrading2(s1:str, s2:str, startDate: datetime, endDate:datetime, window =
 
     dataSet['rollingZ'] = 0.0
     dataSet['spread'] = 0.0
+    dataSet['Mean']= 0.0
+    dataSet['Std'] = 0.0
+    dataSet['Beta']= 0.0
 
     wts= pd.DataFrame(columns=[s1, s2])
     upThld, lowThld = 1.65, 0.5
@@ -117,6 +120,9 @@ def pairTrading2(s1:str, s2:str, startDate: datetime, endDate:datetime, window =
         idx = dataSet.index.values[t]
         dataSet.loc[idx, 'rollingZ'] = zscore
         dataSet.loc[idx, 'spread'] = tmpSprd[-1]
+        dataSet.loc[idx, 'Mean'] = tmpSprd.mean()
+        dataSet.loc[idx, 'Std'] = tmpSprd.std()
+        dataSet.loc[idx, 'Beta'] = lm.params[1]
         
 
         if oldSignal == 0:
@@ -141,15 +147,18 @@ def pairTrading2(s1:str, s2:str, startDate: datetime, endDate:datetime, window =
     dailyRet= GetDailyPnlFromPriceAndWeightChg(dataSet[[s1, s2]], wts).rename('dailyRet')
     perf1 = PerfMeasure(dailyRet)
     perf1.getPerfStats()
-    print('********************** Strategy sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4}, totalReturn: {:.2%}'.format(perf1.sharpie, perf1.mean, perf1.std, perf1.totalReturn))
+    print('********************** Strategy sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4}, totalReturn: {:.2%}, KellyWeight: {:.2%}'.
+        format(perf1.sharpie, perf1.mean, perf1.std, perf1.totalReturn, perf1.kellyWeight/2))
     plotTwoYAxis([dataSet['spread']], [perf1.statsTable['cumret']])
+    dataSet['Beta'].plot()
+    plt.show()
 
 
 
 
 
 
-pairTrading2('mdy', 'spy', datetime(2022,3,26), datetime(2022,12,31))
+pairTrading2('v', 'ma', datetime(2022,1,1), datetime(2022,12,31))
 #calcHedgeDrawDown()
 
 

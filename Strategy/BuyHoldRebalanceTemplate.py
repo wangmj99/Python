@@ -55,7 +55,8 @@ class BuyHoldRebalanceTemplate:
             tmp = benchmarkprice[benchmark].pct_change().fillna(0)
             perf = PerfMeasure(tmp)
             perf.getPerfStats()
-            logging.info('********************** Benchmark: {} sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4} totalReturn: {:.2%}'.format(benchmark, perf.sharpie, perf.mean, perf.std, perf.totalReturn))
+            logging.info('********************** Benchmark: {} sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4} totalReturn: {:.2%}, kellyWeight: {:.2%}'.
+                format(benchmark, perf.sharpie, perf.mean, perf.std, perf.totalReturn, perf.kellyWeight))
             return perf
         
 

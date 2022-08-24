@@ -18,6 +18,7 @@ class PerfMeasure:
         self.mean = self.dailyPnl.mean()
         self.std = self.dailyPnl.std()
         self.sharpie = math.sqrt(period)*self.mean/self.std
+        self.kellyWeight = self.mean/(self.std**2)
 
         df = pd.DataFrame({'pnl': self.dailyPnl})
         df['cumret'] = (1+df['pnl']).cumprod()-1
