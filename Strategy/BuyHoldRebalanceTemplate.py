@@ -58,7 +58,18 @@ class BuyHoldRebalanceTemplate:
             logging.info('********************** Benchmark: {} sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4} totalReturn: {:.2%}, kellyWeight: {:.2%}'.
                 format(benchmark, perf.sharpie, perf.mean, perf.std, perf.totalReturn, perf.kellyWeight))
             return perf
+    
+    def CreateLogEntry(self, symbols, dataSet, wts, index):
+        wtsStrs, priceStrs = [], []
+        for symbol in symbols:
+            wtsStrs.append('{0}: {1:.0%} '.format(symbol, wts.loc[index, symbol]))
+            priceStrs.append('{0}: {1}'.format(symbol, str(round(dataSet.loc[index, symbol],2))))
         
+        res = 'Entry date: {0}, prices: {1} , weights: {2}'.format(
+                pd.to_datetime(index).strftime('%m-%d-%Y'), 
+                ", ".join(priceStrs), 
+                ", ".join(wtsStrs))
+        return res
 
 
 
