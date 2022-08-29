@@ -114,30 +114,35 @@ class PairTrading(BuyHoldRebalanceTemplate):
                 tmp[symbol] = wts.loc[endDate, symbol]
             signal.weights = tmp
         signal.status[PairTrading.zscore_lbl] = res.loc[endDate, PairTrading.zscore_lbl]
+        signal.status[self.symbols[0]] = res.loc[endDate, self.symbols[0]]
+        signal.status[self.symbols[1]] = res.loc[endDate, self.symbols[1]]
           
         return signal
 
-#testcase = PairTrading(['v', 'ma'], 0, 1, 63)
-#res = testcase.backTest(datetime(2022,1,1), datetime(2022,12,31))
-#testcase.ShowPerformance(res, 'Agg')
-#signal = testcase.EvalTradeSignal()
+# testcase = PairTrading(['mdy', 'spy'], 0, 1, 63)
+# res, wts = testcase.backTest(datetime(2012,1,1), datetime(2022,12,31))
+# testcase.ShowPerformance(res, 'Agg')
+# signal = testcase.EvalTradeSignal()
+# print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
+
 
 examSymbols = [
-                ('v', 'ma'), 
-                ('mdy', 'spy'), 
-                ('gdx', 'gld'), 
-                ('pep', 'ko')
+                #('v', 'ma'), 
+                ('mdy', 'voo'), 
+                #('gdx', 'gld'), 
+                #('pep', 'ko')
             ]
 
 for pair in examSymbols:
     try:
         t = PairTrading(list(pair), 0, 1, 63)
         signal = t.EvalTradeSignal()
-        print("Signal: {}, Pair: {}, ZScore: {}".format(signal.HasTradeSignal, pair, signal.status[PairTrading.zscore_lbl]))
+        print("Signal: {}, Pair: {}, Price: ({}, {}), ZScore: {}, ".format(signal.HasTradeSignal, pair, 
+                signal.status[str.upper(pair[0])], signal.status[str.upper(pair[1])],
+                signal.status[PairTrading.zscore_lbl]))
     except Exception as e :
         print('Fail to process {}, error: {}'.format(pair, e))
         logging.error(traceback.format_exc())
-
 
 
 
