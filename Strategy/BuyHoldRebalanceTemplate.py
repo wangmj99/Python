@@ -13,6 +13,12 @@ class LastTradeInfo:
         self.daysSinceLastTrade = 0
         self.transTable = {} #dictionary record last trades info, symbol and price pair
 
+class Tradesignal:
+    def __init__(self) -> None:
+        self.weights = {} #Symobl and new weight
+        self.HasTradeSignal = False
+        self.status = {} #Statistics along with signal, e.g. Zscore, Moveing Avg
+
 class BuyHoldRebalanceTemplate:
     dailyRet_label = 'dailyRet'
 
@@ -36,10 +42,10 @@ class BuyHoldRebalanceTemplate:
         dailyRet= GetDailyPnlFromPriceAndWeightChg(mkd[self.symbols], wts).rename(BuyHoldRebalanceTemplate.dailyRet_label)
         res=pd.concat([mkd, dailyRet], axis = 1, join = 'inner')
 
-        wts.to_csv(MarketDataMgr.dataFilePath.format('tmp_wts'))
-        res.to_csv(MarketDataMgr.dataFilePath.format('tmp'))
+        #wts.to_csv(MarketDataMgr.dataFilePath.format('tmp_wts'))
+        #res.to_csv(MarketDataMgr.dataFilePath.format('tmp'))
 
-        return res
+        return res, wts
 
     @abstractmethod
     def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame):
@@ -70,6 +76,12 @@ class BuyHoldRebalanceTemplate:
                 ", ".join(priceStrs), 
                 ", ".join(wtsStrs))
         return res
+    
+    '''
+    Check if algo create trade signal, buy/sell equities
+    '''
+    def EvalTradeSignal(self):
+        pass
 
 
 

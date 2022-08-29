@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 from urllib import request
 import os.path
 
@@ -22,6 +23,7 @@ class MarketDataMgr:
                 request.urlretrieve(queryUrl, filepath)
                 res[str.upper(symbol)]= filepath
             except:
+                logging.error("Fail to retrieve history data, symbol: {}".format(str.upper(symbol)))
                 print("Fail to retrieve history data, symbol: {}".format(str.upper(symbol)))
 
         return res

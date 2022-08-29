@@ -65,7 +65,7 @@ class BuyHoldwithMAV(BuyHoldRebalanceTemplate):
         if benchmark != None:
             self.ShowBenchmarkPerformance('spy',res.index[0], res.index[-1])
 
-testcase = BuyHoldwithMAV(['spy', 'tlt'], 20, 1, 50)
+testcase = BuyHoldwithMAV(['spy', 'tlt'], 20, 2, 200)
 res = testcase.backTest(datetime(2007,1,1), datetime(2022,12,31))
 testcase.ShowPerformance(res, 'SPY')
 

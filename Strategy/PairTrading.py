@@ -1,4 +1,5 @@
 from datetime import date
+from signal import SIGABRT
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,6 +7,7 @@ import statsmodels.formula.api as smf
 from FinUtil import *
 from MarketDataMgr import *
 from BuyHoldRebalanceTemplate import * 
+import traceback
 
 
 class PairTrading(BuyHoldRebalanceTemplate):
@@ -28,7 +30,8 @@ class PairTrading(BuyHoldRebalanceTemplate):
 
         #wts= pd.DataFrame(columns=[s1, s2])
         upThld, lowThld = 1.65, 0.5
-        oldSignal = 0 # 1 long spread, -1 short spread, 0 no postion
+        tradeSignal = 'Signal'
+        self.lastTrade.transTable = {tradeSignal : 0} # 1 long spread, -1 short spread, 0 no postion
 
         for t in range(self.window-1, len(mkd)):
             tmpdf = mkd.iloc[t-self.window+1:t+1]
@@ -48,27 +51,28 @@ class PairTrading(BuyHoldRebalanceTemplate):
             mkd.loc[idx, PairTrading.beta_lbl] = lm.params[1]
             
             flag = False
-            if oldSignal == 0:
+            if self.lastTrade.transTable[tradeSignal] == 0:
                 if zscore >= upThld:
                     wts.loc[idx] = [-1, 1]
-                    oldSignal = -1
+                    self.lastTrade.transTable[tradeSignal] = -1
                     flag = True
                 elif zscore <= -upThld:
                     wts.loc[idx] = [1, -1]
-                    oldSignal = 1
+                    self.lastTrade.transTable[tradeSignal] = 1
                     flag = True
-            elif oldSignal == 1:
+            elif self.lastTrade.transTable[tradeSignal] == 1:
                 if zscore >=-lowThld:
                     wts.loc[idx] = [0,0]
-                    oldSignal = 0
+                    self.lastTrade.transTable[tradeSignal] = 0
                     flag = True
-            else:  # oldsignla = -1
+            else:  # tradesignal = -1
                 if zscore <= lowThld:
                     wts.loc[idx] = [0,0]
-                    oldSignal = 0
+                    self.lastTrade.transTable[tradeSignal] = 0
                     flag = True
 
             if flag == True:
+                self.lastTrade.daysSinceLastTrade = 1
                 actionstr = actionStr = 'Enter Trade' if wts.loc[idx, s1]!=0 else 'Exit Trade'
                 logging.info('{0}, action: {1}'. format(self.CreateLogEntry(self.symbols, mkd, wts, idx), actionStr))
                 
@@ -76,10 +80,12 @@ class PairTrading(BuyHoldRebalanceTemplate):
                     mkd.loc[idx][PairTrading.zscore_lbl], 
                     mkd.loc[idx][PairTrading.mean_lbl], 
                     mkd.loc[idx][PairTrading.std_lbl]))
+            else:
+                self.lastTrade.daysSinceLastTrade+=1
                     
 
-        wts.to_csv(MarketDataMgr.dataFilePath.format('tmp_wts'))
-        mkd.to_csv(MarketDataMgr.dataFilePath.format('tmp'))
+        wts.to_csv(MarketDataMgr.dataFilePath.format('tmp_wts_({}, {})'.format(s1, s2)))
+        mkd.to_csv(MarketDataMgr.dataFilePath.format('tmp_({}, {})'.format(s1, s2)))
         
 
     def ShowPerformance(self, res: pd.DataFrame, benchmark: str = None):
@@ -94,7 +100,44 @@ class PairTrading(BuyHoldRebalanceTemplate):
         if benchmark != None:
             self.ShowBenchmarkPerformance(benchmark,res.index[0], res.index[-1])
 
-testcase = PairTrading(['v', 'ma'], 0, 1, 63)
-res = testcase.backTest(datetime(2022,1,1), datetime(2022,12,31))
-testcase.ShowPerformance(res, 'Agg')
+    
+    def EvalTradeSignal(self):
+        now = datetime.now()
+        endDate = datetime(now.year, now.month, now.day)
+        #endDate = datetime(2022,7,8)
+        signal = Tradesignal()
+        res, wts = self.backTest(datetime(2021,1,1), endDate)
+        if self.lastTrade.daysSinceLastTrade == 1:
+            signal.HasTradeSignal = True
+            tmp = {}
+            for symbol in wts.columns:
+                tmp[symbol] = wts.loc[endDate, symbol]
+            signal.weights = tmp
+        signal.status[PairTrading.zscore_lbl] = res.loc[endDate, PairTrading.zscore_lbl]
+          
+        return signal
+
+#testcase = PairTrading(['v', 'ma'], 0, 1, 63)
+#res = testcase.backTest(datetime(2022,1,1), datetime(2022,12,31))
+#testcase.ShowPerformance(res, 'Agg')
+#signal = testcase.EvalTradeSignal()
+
+examSymbols = [
+                ('v', 'ma'), 
+                ('mdy', 'spy'), 
+                ('gdx', 'gld'), 
+                ('pep', 'ko')
+            ]
+
+for pair in examSymbols:
+    try:
+        t = PairTrading(list(pair), 0, 1, 63)
+        signal = t.EvalTradeSignal()
+        print("Signal: {}, Pair: {}, ZScore: {}".format(signal.HasTradeSignal, pair, signal.status[PairTrading.zscore_lbl]))
+    except Exception as e :
+        print('Fail to process {}, error: {}'.format(pair, e))
+        logging.error(traceback.format_exc())
+
+
+
 
