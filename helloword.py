@@ -7,6 +7,8 @@ import numpy as np
 from scipy.sparse.sputils import matrix
 from  datetime import datetime
 
+from statsmodels.tsa.vector_ar.vecm import coint_johansen
+
 def eqn(x):
   return x**2 + x + 2
 

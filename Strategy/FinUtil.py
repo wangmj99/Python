@@ -228,7 +228,12 @@ def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame):
 
     return res
                 
-
+def joh_output(res):
+    output = pd.DataFrame([res.lr2,res.lr1],
+                          index=['max_eig_stat',"trace_stat"])
+    print(output.T,'\n')
+    print("Critical values(90%, 95%, 99%) of max_eig_stat\n",res.cvm,'\n')
+    print("Critical values(90%, 95%, 99%) of trace_stat\n",res.cvt,'\n')
 
 
 

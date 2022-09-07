@@ -8,6 +8,8 @@ from FinUtil import *
 from MarketDataMgr import *
 from BuyHoldRebalanceTemplate import * 
 import traceback
+from statsmodels.tsa.vector_ar.vecm import coint_johansen 
+from statsmodels.tsa.stattools import coint 
 
 
 class PairTrading(BuyHoldRebalanceTemplate):
@@ -27,7 +29,7 @@ class PairTrading(BuyHoldRebalanceTemplate):
         mkd[PairTrading.mean_lbl]= 0.0
         mkd[PairTrading.std_lbl] = 0.0
         mkd[PairTrading.beta_lbl]= 0.0
-
+        
         #wts= pd.DataFrame(columns=[s1, s2])
         upThld, lowThld = 1.65, 0.5
         tradeSignal = 'Signal'
@@ -113,24 +115,25 @@ class PairTrading(BuyHoldRebalanceTemplate):
             for symbol in wts.columns:
                 tmp[symbol] = wts.loc[endDate, symbol]
             signal.weights = tmp
-        signal.status[PairTrading.zscore_lbl] = res.loc[endDate, PairTrading.zscore_lbl]
-        signal.status[self.symbols[0]] = res.loc[endDate, self.symbols[0]]
-        signal.status[self.symbols[1]] = res.loc[endDate, self.symbols[1]]
+        lastDateEntry = res.index[-1]
+        signal.status[PairTrading.zscore_lbl] = res.loc[lastDateEntry, PairTrading.zscore_lbl]
+        signal.status[self.symbols[0]] = res.loc[lastDateEntry, self.symbols[0]]
+        signal.status[self.symbols[1]] = res.loc[lastDateEntry, self.symbols[1]]
           
         return signal
 
-# testcase = PairTrading(['mdy', 'spy'], 0, 1, 63)
-# res, wts = testcase.backTest(datetime(2012,1,1), datetime(2022,12,31))
+# testcase = PairTrading(['v', 'ma'], 0, 1, 63)
+# res, wts = testcase.backTest(datetime(2021,1,1), datetime(2022,12,31))
 # testcase.ShowPerformance(res, 'Agg')
 # signal = testcase.EvalTradeSignal()
 # print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
 
 
 examSymbols = [
-                #('v', 'ma'), 
+                ('v', 'ma'), 
                 ('mdy', 'voo'), 
-                #('gdx', 'gld'), 
-                #('pep', 'ko')
+                ('gdx', 'gld'), 
+                ('pep', 'ko')
             ]
 
 for pair in examSymbols:
@@ -144,5 +147,14 @@ for pair in examSymbols:
         print('Fail to process {}, error: {}'.format(pair, e))
         logging.error(traceback.format_exc())
 
+# s1, s2 = 'XLE', 'MDY'
+# johntest = retreiveEquityAdjCloseTable([s1, s2], datetime(2020,1,1), datetime(2022,1,1))
+# res= coint_johansen(johntest, 0, 1)
+# print(coint(johntest[s1], johntest[s2]))
+# output = pd.DataFrame([res.lr2,res.lr1],
+#                           index=['max_eig_stat',"trace_stat"])
+# print(output.T,'\n')
+# print("Critical values(90%, 95%, 99%) of max_eig_stat\n",res.cvm,'\n')
+# print("Critical values(90%, 95%, 99%) of trace_stat\n",res.cvt,'\n')
 
 
