@@ -109,25 +109,8 @@ def getPortfolioDailyPnlByPriceAndFixedPosition(prices: list, weights: list)->pd
     return res
 
 #Take a list of equity history data as csv files and output adjust close in dataframe format
-def retreiveEquityAdjCloseTable(symbols: list, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
-    path = MarketDataMgr.dataFilePath
-    closePriceLabel = 'Adj Close'
-    res = None
-    for symbol in symbols:
-        md = MarketDataMgr.retrieveHistoryDataToCSV([symbol], startDate, endDate)
-        name= md[str.upper(symbol)]
-        df = pd.read_csv(name, index_col=0)
-        df.index = pd.to_datetime(df.index)
-        df.sort_index(axis=0)
-        temp = df[closePriceLabel].rename(str.upper(symbol))
-        if res is None :
-            res = pd.DataFrame(temp)
-        else:
-            if innerjoin:
-                res = pd.concat([res, temp], axis = 1, join = 'inner')
-            else :
-                res = pd.concat([res, temp], axis = 1)
-    return res
+def getEquityAdjCloseTable(symbols: list, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
+    return MarketDataMgr.getMultipleEquityData(list, MarketDataMgr.adjcls_lbl, startDate, endDate, innerjoin)
 
 def genereateRollingZscore(srs: pd.Series, window: int):
     r = srs.rolling(window=window)

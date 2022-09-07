@@ -67,7 +67,7 @@ class BuyHoldwithMAV(BuyHoldRebalanceTemplate):
 
 testcase = BuyHoldwithMAV(['spy', 'tlt'], 20, 2, 200)
 res = testcase.backTest(datetime(2007,1,1), datetime(2022,12,31))
-testcase.ShowPerformance(res, 'SPY')
+testcase.ShowPerformance(res[0], 'SPY')
 
 
 
