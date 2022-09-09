@@ -32,6 +32,9 @@ mydataset = {
 
 myvar = pd.DataFrame(mydataset)
 
+arrnp = np.array([1, 2, 3, 4, 5, 6, 7])
+arrnp[:,2]
+
 
 
 

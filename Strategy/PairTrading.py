@@ -122,39 +122,45 @@ class PairTrading(BuyHoldRebalanceTemplate):
           
         return signal
 
-# testcase = PairTrading(['v', 'ma'], 0, 1, 63)
+# testcase = PairTrading(['spyd', 'spyg'], 0, 1, 63)
 # res, wts = testcase.backTest(datetime(2021,1,1), datetime(2022,12,31))
 # testcase.ShowPerformance(res, 'Agg')
 # signal = testcase.EvalTradeSignal()
 # print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
 
 
-examSymbols = [
-                ('v', 'ma'), 
-                ('mdy', 'voo'), 
-                ('gdx', 'gld'), 
-                ('pep', 'ko')
-            ]
+# examSymbols = [
+#                 ('v', 'ma'), 
+#                 ('mdy', 'spy'), 
+#                 ('gdx', 'gld'), 
+#                 ('pep', 'ko')
+#             ]
+# for pair in examSymbols:
+#     try:
+#         t = PairTrading(list(pair), 0, 1, 63)
+#         signal = t.EvalTradeSignal()
+#         print("Signal: {}, Pair: {}, Price: ({}, {}), ZScore: {}, ".format(signal.HasTradeSignal, pair, 
+#                 signal.status[str.upper(pair[0])], signal.status[str.upper(pair[1])],
+#                 signal.status[PairTrading.zscore_lbl]))
+#     except Exception as e :
+#         print('Fail to process {}, error: {}'.format(pair, e))
+#         logging.error(traceback.format_exc())
 
-for pair in examSymbols:
-    try:
-        t = PairTrading(list(pair), 0, 1, 63)
-        signal = t.EvalTradeSignal()
-        print("Signal: {}, Pair: {}, Price: ({}, {}), ZScore: {}, ".format(signal.HasTradeSignal, pair, 
-                signal.status[str.upper(pair[0])], signal.status[str.upper(pair[1])],
-                signal.status[PairTrading.zscore_lbl]))
-    except Exception as e :
-        print('Fail to process {}, error: {}'.format(pair, e))
-        logging.error(traceback.format_exc())
+s1, s2 = 'USO', 'DUG'
+johntest = MarketDataMgr.getEquityDataSingleField([s1, s2], MarketDataMgr.adjcls_lbl, datetime(2021,9,1), datetime(2022,9,1))
 
-# s1, s2 = 'XLE', 'MDY'
-# johntest = retreiveEquityAdjCloseTable([s1, s2], datetime(2020,1,1), datetime(2022,1,1))
+isCoint = johansenCointTest(johntest)
+
+print(isCoint)
+
 # res= coint_johansen(johntest, 0, 1)
-# print(coint(johntest[s1], johntest[s2]))
+# print(type(res.cvm))
+# #print(coint(johntest[s1], johntest[s2]))
 # output = pd.DataFrame([res.lr2,res.lr1],
 #                           index=['max_eig_stat',"trace_stat"])
 # print(output.T,'\n')
 # print("Critical values(90%, 95%, 99%) of max_eig_stat\n",res.cvm,'\n')
 # print("Critical values(90%, 95%, 99%) of trace_stat\n",res.cvt,'\n')
+
 
 

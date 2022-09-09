@@ -35,7 +35,7 @@ class BuyHoldRebalanceTemplate:
         3. Generate performance measure
         """
         logging.info('---------------------------------------Start BackTest--------------------------------------')   
-        mkd = MarketDataMgr.getMultipleEquityData(self.symbols, MarketDataMgr.adjcls_lbl, startDate, endDate)       
+        mkd = MarketDataMgr.getEquityDataSingleField(self.symbols, MarketDataMgr.adjcls_lbl, startDate, endDate)       
         wts = pd.DataFrame(columns=self.symbols)
         self.BuildWeightsTable(mkd, wts)
         
@@ -57,7 +57,7 @@ class BuyHoldRebalanceTemplate:
 
     def ShowBenchmarkPerformance(self, benchmark:str, startDate: datetime, endDate: DateTime):
             benchmark = str.upper(benchmark)
-            benchmarkprice = MarketDataMgr.getMultipleEquityData([benchmark], MarketDataMgr.adjcls_lbl, startDate, endDate)
+            benchmarkprice = MarketDataMgr.getEquityDataSingleField([benchmark], MarketDataMgr.adjcls_lbl, startDate, endDate)
             tmp = benchmarkprice[benchmark].pct_change().fillna(0)
             perf = PerfMeasure(tmp)
             perf.getPerfStats()

@@ -7,6 +7,8 @@ from abc import ABC,abstractmethod
 import os.path
 from MarketDataMgr import *
 import matplotlib.pyplot as plt
+from statsmodels.tsa.vector_ar.vecm import coint_johansen 
+import numpy as np
 
 class PerfMeasure:
     def __init__(self,dailyPnl:pd.Series) -> None:
@@ -110,7 +112,7 @@ def getPortfolioDailyPnlByPriceAndFixedPosition(prices: list, weights: list)->pd
 
 #Take a list of equity history data as csv files and output adjust close in dataframe format
 def getEquityAdjCloseTable(symbols: list, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
-    return MarketDataMgr.getMultipleEquityData(list, MarketDataMgr.adjcls_lbl, startDate, endDate, innerjoin)
+    return MarketDataMgr.getEquityDataSingleField(list, MarketDataMgr.adjcls_lbl, startDate, endDate, innerjoin)
 
 def genereateRollingZscore(srs: pd.Series, window: int):
     r = srs.rolling(window=window)
@@ -219,6 +221,23 @@ def joh_output(res):
     print("Critical values(90%, 95%, 99%) of trace_stat\n",res.cvt,'\n')
 
 
+#input 2 series to check if they are cointegrated
+def johansenCointTest(df: pd.DataFrame, confidenceLvl = 90):
+    result = coint_johansen(df, 0, 1)
+    confidence_level_cols = {
+        90: 0,
+        95: 1,
+        99: 2
+    }
+    confidence_level_col = confidence_level_cols[confidenceLvl]
+    
+    trace_crit_value = result.cvt[:, confidence_level_col]
+    eigen_crit_value = result.cvm[:, confidence_level_col]
+    
+    # The trace statistic and maximum eigenvalue statistic are stored in lr1 and lr2;
+    # see if they exceeded the confidence threshold
+    res = np.all(result.lr1 >= trace_crit_value) and np.all(result.lr2 >= eigen_crit_value)
+    return res
 
         
 

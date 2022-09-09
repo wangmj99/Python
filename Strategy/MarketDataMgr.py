@@ -47,8 +47,9 @@ class MarketDataMgr:
         end = datetime.strptime(endDate, '%m/%d/%Y')
         return MarketDataMgr.retrieveHistoryDataToCSV(list, start, end)
 
-
-    def getMultipleEquityData(symbols: list, field: str, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
+    #return a single dataframe with symbols as column 
+    @staticmethod
+    def getEquityDataSingleField(symbols: list, field: str, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
         if field not in MarketDataMgr.labels: return None
         ath = MarketDataMgr.dataFilePath
         res = None
@@ -68,19 +69,37 @@ class MarketDataMgr:
                     res = pd.concat([res, temp], axis = 1)
         return res
 
-    def getSingleEquityData(symbol: str, fields: list, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
+    #return Dictionary with key is Symbol and value is Dataframe contain all field for the symbol
+    #innerjoin set to true for returning all symbols in the same datetime range
+    @staticmethod
+    def getEquityDataMultiFields(symbols: list, fields: list, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
         fields = [x for x in fields if x in MarketDataMgr.labels]
+        symbols = [str.upper(x) for x in symbols]
         if len(fields) == 0: return None
 
         path = MarketDataMgr.dataFilePath
-        res = None
+        res = {}
+        idx = None
+        for symbol in symbols:
+            md = MarketDataMgr.retrieveHistoryDataToCSV([symbol], startDate, endDate)
+            if symbol not in md: continue
 
-        md = MarketDataMgr.retrieveHistoryDataToCSV([symbol], startDate, endDate)
-        name= md[str.upper(symbol)]
-        df = pd.read_csv(name, index_col=0)
-        df.index = pd.to_datetime(df.index)
-        
-        res = df[fields]
+            name= md[symbol]
+            df = pd.read_csv(name, index_col=0)
+            df.index = pd.to_datetime(df.index)        
+            res[symbol] = df[fields]
+
+            if idx is None:
+                idx = df.index
+            else:
+                idx =  idx.intersection(df.index, sort=None)
+    
+        if innerjoin:
+            for key in res:
+                tmp = res[key].loc[idx]
+                res[key] = tmp
+
         return res
+
 
 
