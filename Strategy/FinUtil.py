@@ -221,7 +221,7 @@ def joh_output(res):
     print("Critical values(90%, 95%, 99%) of trace_stat\n",res.cvt,'\n')
 
 
-#input 2 series to check if they are cointegrated
+#input 2 series and confidence level to check if they are cointegrated, return True or False
 def johansenCointTest(df: pd.DataFrame, confidenceLvl = 90):
     result = coint_johansen(df, 0, 1)
     confidence_level_cols = {
