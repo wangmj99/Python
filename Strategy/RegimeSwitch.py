@@ -20,7 +20,7 @@ class RegimeSwitch(BuyHoldRebalanceTemplate):
         self.pctChg = abs(pctChg)/100
         self.holdDays = holdDays
 
-    def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame):
+    def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame, startDate: datetime, endDate: datetime):
         tradeSignal = 'Signal'
         self.lastTrade.transTable = {tradeSignal : 0} # 1 long , -1 short , 0 no postion
         
@@ -32,8 +32,10 @@ class RegimeSwitch(BuyHoldRebalanceTemplate):
         mkd['low'] = lows
 
         mkd = mkd.dropna()
+        mkd = mkd.loc[startDate: endDate]
 
-        
+        wts.loc[mkd.index[0]] = [0]
+
         for idx, row in mkd.iterrows():
             flag = False
             if len(self.lastTrade.transTable) >0  and self.lastTrade.daysSinceLastTrade <= self.cooldowndays: # still in cooldownday:
@@ -86,5 +88,5 @@ class RegimeSwitch(BuyHoldRebalanceTemplate):
             self.ShowBenchmarkPerformance('spy',res.index[0], res.index[-1])
 
 testcase = RegimeSwitch(['spy'], 15, 5, 21)
-res = testcase.backTest(datetime(2021,1,1), datetime(2022,9,10))
+res = testcase.backTest(datetime(2022,1,1), datetime(2022,9,10), 15)
 testcase.ShowPerformance(res[0], 'SPY')

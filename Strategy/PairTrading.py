@@ -21,7 +21,7 @@ class PairTrading(BuyHoldRebalanceTemplate):
         super().__init__(symbols, cooldowndays, leverage)
         self.window = window
 
-    def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame):
+    def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame,startDate: datetime, endDate: datetime):
         s1, s2 = self.symbols[0], self.symbols[1]
 
         mkd[PairTrading.zscore_lbl] = 0.0
@@ -122,11 +122,11 @@ class PairTrading(BuyHoldRebalanceTemplate):
           
         return signal
 
-# testcase = PairTrading(['spyd', 'spyg'], 0, 1, 63)
-# res, wts = testcase.backTest(datetime(2021,1,1), datetime(2022,12,31))
-# testcase.ShowPerformance(res, 'Agg')
-# signal = testcase.EvalTradeSignal()
-# print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
+testcase = PairTrading(['spyd', 'spyg'], 0, 1, 63)
+res, wts = testcase.backTest(datetime(2021,1,1), datetime(2022,12,31))
+testcase.ShowPerformance(res, 'Agg')
+signal = testcase.EvalTradeSignal()
+print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
 
 
 # examSymbols = [
@@ -146,12 +146,12 @@ class PairTrading(BuyHoldRebalanceTemplate):
 #         print('Fail to process {}, error: {}'.format(pair, e))
 #         logging.error(traceback.format_exc())
 
-s1, s2 = 'USO', 'DUG'
-johntest = MarketDataMgr.getEquityDataSingleField([s1, s2], MarketDataMgr.adjcls_lbl, datetime(2021,9,1), datetime(2022,9,1))
+# s1, s2 = 'USO', 'DUG'
+# johntest = MarketDataMgr.getEquityDataSingleField([s1, s2], MarketDataMgr.adjcls_lbl, datetime(2021,9,1), datetime(2022,9,1))
 
-isCoint = johansenCointTest(johntest)
+# isCoint = johansenCointTest(johntest)
 
-print(isCoint)
+# print(isCoint)
 
 # res= coint_johansen(johntest, 0, 1)
 # print(type(res.cvm))

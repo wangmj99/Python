@@ -18,7 +18,7 @@ class BuyHoldwithMAV(BuyHoldRebalanceTemplate):
         self.window = movingWindow
         
     
-    def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame):
+    def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame, startDate: datetime, endDate: datetime):
         rolling = mkd[self.symbols[0]].rolling(self.window)
         mv_avg = rolling.mean().shift(1) 
 
@@ -26,6 +26,8 @@ class BuyHoldwithMAV(BuyHoldRebalanceTemplate):
         
         mkd[mvg] = mv_avg
         mkd = mkd.dropna()
+
+        mkd = mkd.loc[startDate:endDate]
         
         for index, row in mkd.iterrows():
             if len(self.lastTrade.transTable) >0  and self.lastTrade.daysSinceLastTrade <= self.cooldowndays: # still in cooldownday:
@@ -66,7 +68,7 @@ class BuyHoldwithMAV(BuyHoldRebalanceTemplate):
             self.ShowBenchmarkPerformance('spy',res.index[0], res.index[-1])
 
 testcase = BuyHoldwithMAV(['spy', 'tlt'], 20, 2, 200)
-res = testcase.backTest(datetime(2007,1,1), datetime(2022,12,31))
+res = testcase.backTest(datetime(2021,1,1), datetime(2022,12,31), 200)
 testcase.ShowPerformance(res[0], 'SPY')
 
 

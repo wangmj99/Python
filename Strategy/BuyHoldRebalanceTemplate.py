@@ -1,7 +1,6 @@
-from xmlrpc.client import DateTime
 from FinUtil import *
 from MarketDataMgr import *
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import logging
 
@@ -28,16 +27,18 @@ class BuyHoldRebalanceTemplate:
         self.cooldowndays = cooldowndays  #cooldowndays after previous trade, to avoid frequent trades
         self.lastTrade = LastTradeInfo() 
 
-    def backTest(self, startDate: datetime, endDate: datetime):
+    def backTest(self, startDate: datetime, endDate: datetime, warmup = 0):
         """
         1. Get history data for all symbols
         2. Generate weight table
         3. Generate performance measure
         """
         logging.info('---------------------------------------Start BackTest--------------------------------------')   
-        mkd = MarketDataMgr.getEquityDataSingleField(self.symbols, MarketDataMgr.adjcls_lbl, startDate, endDate)       
+        warmstartDate = startDate if warmup == 0 else startDate - timedelta(days=warmup*2+3) 
+
+        mkd = MarketDataMgr.getEquityDataSingleField(self.symbols, MarketDataMgr.adjcls_lbl, warmstartDate, endDate)       
         wts = pd.DataFrame(columns=self.symbols)
-        self.BuildWeightsTable(mkd, wts)
+        self.BuildWeightsTable(mkd, wts, startDate, endDate)
         
         dailyRet= GetDailyPnlFromPriceAndWeightChg(mkd[self.symbols], wts).rename(BuyHoldRebalanceTemplate.dailyRet_label)
         res=pd.concat([mkd, dailyRet], axis = 1, join = 'inner')
@@ -48,14 +49,14 @@ class BuyHoldRebalanceTemplate:
         return res, wts
 
     @abstractmethod
-    def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame):
+    def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame, startDate: datetime, endDate: datetime):
         pass
     
     @abstractmethod
     def ShowPerformance(self, testResult:pd.DataFrame, benchmark:str = None):
         pass
 
-    def ShowBenchmarkPerformance(self, benchmark:str, startDate: datetime, endDate: DateTime):
+    def ShowBenchmarkPerformance(self, benchmark:str, startDate: datetime, endDate: datetime):
             benchmark = str.upper(benchmark)
             benchmarkprice = MarketDataMgr.getEquityDataSingleField([benchmark], MarketDataMgr.adjcls_lbl, startDate, endDate)
             tmp = benchmarkprice[benchmark].pct_change().fillna(0)

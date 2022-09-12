@@ -41,6 +41,8 @@ class PerfMeasure:
 
         self.totalReturn = df['cumret'][-1]
 
+        df.to_csv('./data/tmpPD.csv')
+
 class Strategy(ABC):
     #@abstractmethod
     #Abstract method  stock price time series and generate long/short position
