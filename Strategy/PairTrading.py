@@ -20,6 +20,7 @@ class PairTrading(BuyHoldRebalanceTemplate):
     def __init__(self, symbols: list, cooldowndays=0, leverage=1, window = 50):
         super().__init__(symbols, cooldowndays, leverage)
         self.window = window
+        self.warmupDays = window
 
     def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame,startDate: datetime, endDate: datetime):
         s1, s2 = self.symbols[0], self.symbols[1]
@@ -35,7 +36,14 @@ class PairTrading(BuyHoldRebalanceTemplate):
         tradeSignal = 'Signal'
         self.lastTrade.transTable = {tradeSignal : 0} # 1 long spread, -1 short spread, 0 no postion
 
-        for t in range(self.window-1, len(mkd)):
+        #get the startdate index in the dataframe
+        startIdx = mkd.index.get_loc(startDate, method='bfill') 
+
+        #mark the start position
+        wts.loc[mkd.index[startIdx]] = [0,0]
+
+        #for t in range(self.window-1, len(mkd)):
+        for t in range(startIdx, len(mkd)):
             tmpdf = mkd.iloc[t-self.window+1:t+1]
             
             #s2 = smf.add_constant(s2)

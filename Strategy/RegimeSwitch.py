@@ -14,11 +14,12 @@ class RegimeSwitch(BuyHoldRebalanceTemplate):
                     format="%(asctime)s %(message)s", datefmt='%d-%b-%y %H:%M:%S')    
     
 
-    def __init__(self, symbols: list, ndays, pctChg, holdDays, cooldowndays=0, leverage=1, ):
+    def __init__(self, symbols: list, ndays,  pctChg, holdDays, cooldowndays=0, leverage=1):
         super().__init__(symbols, cooldowndays, leverage)
         self.ndays = ndays
         self.pctChg = abs(pctChg)/100
         self.holdDays = holdDays
+        self.warmupDays = ndays
 
     def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame, startDate: datetime, endDate: datetime):
         tradeSignal = 'Signal'
@@ -87,6 +88,6 @@ class RegimeSwitch(BuyHoldRebalanceTemplate):
         if benchmark != None:
             self.ShowBenchmarkPerformance('spy',res.index[0], res.index[-1])
 
-testcase = RegimeSwitch(['spy'], 15, 5, 21)
-res = testcase.backTest(datetime(2022,1,1), datetime(2022,9,10), 15)
+testcase = RegimeSwitch(['MDY'], 20, 5, 21)
+res = testcase.backTest(datetime(2022,1,1), datetime(2022,9,10))
 testcase.ShowPerformance(res[0], 'SPY')

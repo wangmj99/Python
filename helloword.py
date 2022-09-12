@@ -32,8 +32,7 @@ mydataset = {
 
 myvar = pd.DataFrame(mydataset)
 
-arrnp = np.array([1, 2, 3, 4, 5, 6, 7])
-arrnp[:,2]
+
 
 
 
@@ -67,18 +66,7 @@ m = map(len, ['app', 'test'])
 print(type(m))
 print(list(m))
 
-idx = pd.date_range('1/1/2021', periods=99, freq='D')
-s1 = pd.Series([x for x in range(1,100)])
-s1.index = idx
-s2 = s1.resample('M').agg(lambda x: (x[-1]-x[0])/x[0])
-s3 = s1.resample('M').agg(lambda x: x[-1])
-df= DataFrame()
-df["Close"] = s3.diff()
-df["Return"] =s3.pct_change()
-df2 = DataFrame()
-df2["DClose"] = s1
-print(df.head())
-print(df2['2021-4'])
+
 
 myseries = pd.Series([1,4,0,7,5], index=['a','b','c','d','e'])
 for i in range(len(myseries.index)):
@@ -116,5 +104,13 @@ lm = lambda x: 1 if abs(100- x.sum())<0.001 else (0 if x.sum()<100 else -1)
 df2['update'] = df2.apply(lm, axis= 1)
 
 
-df3 = df2[['col2', 'col3']]
 
+idx = pd.date_range('1/1/2021', periods=99, freq='D')
+s1 = pd.Series([x for x in range(1,100)])
+s1.index = idx
+s2 = s1.resample('M').agg(lambda x: (x[-1]-x[0])/x[0])
+dt = pd.to_datetime("2020-12-31")
+ilocidx = s1.index.get_loc(dt, method='bfill')
+
+print('ilocidx: ' + str(ilocidx))
+print(s1.index[0])

@@ -13,9 +13,10 @@ class BuyHoldwithMAV(BuyHoldRebalanceTemplate):
     logging.basicConfig(filename="./logs/BuywithMV.log", level=logging.INFO,
                     format="%(asctime)s %(message)s", datefmt='%d-%b-%y %H:%M:%S')    
 
-    def __init__(self, symbols: list, cooldowndays=0, leverage=1, movingWindow = 50):
+    def __init__(self, symbols: list, cooldowndays=0, leverage=1,  movingWindow = 50):
         super().__init__(symbols, cooldowndays, leverage)
         self.window = movingWindow
+        self.warmupDays = movingWindow
         
     
     def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame, startDate: datetime, endDate: datetime):
@@ -67,8 +68,8 @@ class BuyHoldwithMAV(BuyHoldRebalanceTemplate):
         if benchmark != None:
             self.ShowBenchmarkPerformance('spy',res.index[0], res.index[-1])
 
-testcase = BuyHoldwithMAV(['spy', 'tlt'], 20, 2, 200)
-res = testcase.backTest(datetime(2021,1,1), datetime(2022,12,31), 200)
+testcase = BuyHoldwithMAV(['spy', 'tlt'], 20, 1, 200)
+res = testcase.backTest(datetime(2022,1,1), datetime(2022,12,31))
 testcase.ShowPerformance(res[0], 'SPY')
 
 

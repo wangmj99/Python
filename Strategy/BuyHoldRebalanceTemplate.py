@@ -21,20 +21,21 @@ class Tradesignal:
 class BuyHoldRebalanceTemplate:
     dailyRet_label = 'dailyRet'
 
-    def __init__(self, symbols:list , cooldowndays = 0, leverage =1):
+    def __init__(self, symbols:list , cooldowndays = 0, leverage =1, warmupDays = 0):
         self.symbols =list(map(str.upper, symbols))
         self.leverage = leverage
         self.cooldowndays = cooldowndays  #cooldowndays after previous trade, to avoid frequent trades
+        self.warmupDays = warmupDays # additional days of market data to prepare for certain algos using rolling window
         self.lastTrade = LastTradeInfo() 
 
-    def backTest(self, startDate: datetime, endDate: datetime, warmup = 0):
+    def backTest(self, startDate: datetime, endDate: datetime):
         """
         1. Get history data for all symbols
         2. Generate weight table
         3. Generate performance measure
         """
         logging.info('---------------------------------------Start BackTest--------------------------------------')   
-        warmstartDate = startDate if warmup == 0 else startDate - timedelta(days=warmup*2+3) 
+        warmstartDate = startDate if self.warmupDays == 0 else startDate - timedelta(days=self.warmupDays*2+3) 
 
         mkd = MarketDataMgr.getEquityDataSingleField(self.symbols, MarketDataMgr.adjcls_lbl, warmstartDate, endDate)       
         wts = pd.DataFrame(columns=self.symbols)
