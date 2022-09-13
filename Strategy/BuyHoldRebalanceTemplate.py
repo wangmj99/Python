@@ -28,7 +28,7 @@ class BuyHoldRebalanceTemplate:
         self.warmupDays = warmupDays # additional days of market data to prepare for certain algos using rolling window
         self.lastTrade = LastTradeInfo() 
 
-    def backTest(self, startDate: datetime, endDate: datetime):
+    def backTest(self, startDate: datetime, endDate: datetime, getMktDataCSV = True):
         """
         1. Get history data for all symbols
         2. Generate weight table
@@ -37,7 +37,7 @@ class BuyHoldRebalanceTemplate:
         logging.info('---------------------------------------Start BackTest--------------------------------------')   
         warmstartDate = startDate if self.warmupDays == 0 else startDate - timedelta(days=self.warmupDays*2+3) 
 
-        mkd = MarketDataMgr.getEquityDataSingleField(self.symbols, MarketDataMgr.adjcls_lbl, warmstartDate, endDate)       
+        mkd = MarketDataMgr.getEquityDataSingleField(self.symbols, MarketDataMgr.adjcls_lbl, warmstartDate, endDate, getMktDataCSV)       
         wts = pd.DataFrame(columns=self.symbols)
         self.BuildWeightsTable(mkd, wts, startDate, endDate)
         

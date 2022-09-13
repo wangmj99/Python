@@ -20,7 +20,8 @@ class MarketDataMgr:
     labels = [date_lbl, open_lbl, high_lbl, low_lbl, close_lbl, adjcls_lbl, volume_lbl]
 
     @staticmethod
-    def retrieveHistoryDataToCSV(symbols: list, startDate: datetime, endDate: datetime)-> str:
+    #set getMktDataCSV to false to avoid downloading duplicate market data files
+    def retrieveHistoryDataToCSV(symbols: list, startDate: datetime, endDate: datetime, getMktDataCSV= True)-> str:
         url = 'https://query1.finance.yahoo.com/v7/finance/download/{0}?period1={1}&period2={2}&interval=1d&events=history&includeAdjustedClose=true'
 
         base = datetime(1970,1,1)
@@ -33,7 +34,8 @@ class MarketDataMgr:
             queryUrl = url.format(symbol, starttick, endtick)
             filepath = MarketDataMgr.dataFilePath.format(symbol)
             try:
-                request.urlretrieve(queryUrl, filepath)
+                if getMktDataCSV:
+                    request.urlretrieve(queryUrl, filepath)
                 res[str.upper(symbol)]= filepath
             except:
                 logging.error("Fail to retrieve history data, symbol: {}".format(str.upper(symbol)))
@@ -49,12 +51,12 @@ class MarketDataMgr:
 
     #return a single dataframe with symbols as column 
     @staticmethod
-    def getEquityDataSingleField(symbols: list, field: str, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
+    def getEquityDataSingleField(symbols: list, field: str, startDate: datetime, endDate:datetime, innerjoin = True, getMktDataCSV = True )->pd.DataFrame:
         if field not in MarketDataMgr.labels: return None
         ath = MarketDataMgr.dataFilePath
         res = None
         for symbol in symbols:
-            md = MarketDataMgr.retrieveHistoryDataToCSV([symbol], startDate, endDate)
+            md = MarketDataMgr.retrieveHistoryDataToCSV([symbol], startDate, endDate, getMktDataCSV)
             name= md[str.upper(symbol)]
             df = pd.read_csv(name, index_col=0)
             df.index = pd.to_datetime(df.index)
@@ -72,7 +74,7 @@ class MarketDataMgr:
     #return Dictionary with key is Symbol and value is Dataframe contain all field for the symbol
     #innerjoin set to true for returning all symbols in the same datetime range
     @staticmethod
-    def getEquityDataMultiFields(symbols: list, fields: list, startDate: datetime, endDate:datetime, innerjoin = True )->pd.DataFrame:
+    def getEquityDataMultiFields(symbols: list, fields: list, startDate: datetime, endDate:datetime, innerjoin = True, getMktDataCSV = True )->pd.DataFrame:
         fields = [x for x in fields if x in MarketDataMgr.labels]
         symbols = [str.upper(x) for x in symbols]
         if len(fields) == 0: return None
@@ -81,7 +83,7 @@ class MarketDataMgr:
         res = {}
         idx = None
         for symbol in symbols:
-            md = MarketDataMgr.retrieveHistoryDataToCSV([symbol], startDate, endDate)
+            md = MarketDataMgr.retrieveHistoryDataToCSV([symbol], startDate, endDate, getMktDataCSV)
             if symbol not in md: continue
 
             name= md[symbol]

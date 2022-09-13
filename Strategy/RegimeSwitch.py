@@ -88,6 +88,6 @@ class RegimeSwitch(BuyHoldRebalanceTemplate):
         if benchmark != None:
             self.ShowBenchmarkPerformance('spy',res.index[0], res.index[-1])
 
-testcase = RegimeSwitch(['MDY'], 20, 5, 21)
+testcase = RegimeSwitch(['gs'], 42, 10, 21)
 res = testcase.backTest(datetime(2022,1,1), datetime(2022,9,10))
 testcase.ShowPerformance(res[0], 'SPY')
