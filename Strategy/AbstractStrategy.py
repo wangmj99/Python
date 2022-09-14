@@ -18,7 +18,7 @@ class Tradesignal:
         self.HasTradeSignal = False
         self.status = {} #Statistics along with signal, e.g. Zscore, Moveing Avg
 
-class BuyHoldRebalanceTemplate:
+class AbstractStrategy:
     dailyRet_label = 'dailyRet'
 
     def __init__(self, symbols:list , cooldowndays = 0, leverage =1, warmupDays = 0):
@@ -41,7 +41,7 @@ class BuyHoldRebalanceTemplate:
         wts = pd.DataFrame(columns=self.symbols)
         self.BuildWeightsTable(mkd, wts, startDate, endDate)
         
-        dailyRet= GetDailyPnlFromPriceAndWeightChg(mkd[self.symbols], wts).rename(BuyHoldRebalanceTemplate.dailyRet_label)
+        dailyRet= GetDailyPnlFromPriceAndWeightChg(mkd[self.symbols], wts).rename(AbstractStrategy.dailyRet_label)
         res=pd.concat([mkd, dailyRet], axis = 1, join = 'inner')
 
         #wts.to_csv(MarketDataMgr.dataFilePath.format('tmp_wts'))

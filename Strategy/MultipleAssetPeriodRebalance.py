@@ -3,9 +3,9 @@ from MarketDataMgr import *
 from datetime import datetime
 import matplotlib.pyplot as plt
 import logging
-from BuyHoldRebalanceTemplate import *
+from AbstractStrategy import *
 
-class MultipleAssetPeriodRebalance(BuyHoldRebalanceTemplate):
+class MultipleAssetPeriodRebalance(AbstractStrategy):
 
     logging.basicConfig(filename="./logs/MultipleAssetPeriodRebalance.log", level=logging.INFO,
                     format="%(asctime)s %(message)s", datefmt='%d-%b-%y %H:%M:%S')    
@@ -41,7 +41,7 @@ class MultipleAssetPeriodRebalance(BuyHoldRebalanceTemplate):
             )
 
     def ShowPerformance(self, res: pd.DataFrame, benchmark: str = None):
-        perf1 = PerfMeasure(res[0][BuyHoldRebalanceTemplate.dailyRet_label])
+        perf1 = PerfMeasure(res[0][AbstractStrategy.dailyRet_label])
         perf1.getPerfStats()
         logging.info('********************** Strategy sharpie(yearly): {:.4}, mean: {:.4}, std: {:.4}, totalReturn: {:.2%}'.format(perf1.sharpie, perf1.mean, perf1.std, perf1.totalReturn))
         

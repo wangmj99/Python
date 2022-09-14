@@ -1,14 +1,15 @@
+from symtable import Symbol
 from FinUtil import *
 from MarketDataMgr import *
 from datetime import datetime
 import matplotlib.pyplot as plt
 import logging
-from BuyHoldRebalanceTemplate import *
+from AbstractStrategy import *
 
 """
 Long stock1 if above moving average, long stock2 if stock1 is below moving average
 """
-class BuyHoldwithMAV(BuyHoldRebalanceTemplate):
+class BuyHoldwithMAV(AbstractStrategy):
     mv_label = 'MV_AVG'
     logging.basicConfig(filename="./logs/BuywithMV.log", level=logging.INFO,
                     format="%(asctime)s %(message)s", datefmt='%d-%b-%y %H:%M:%S')    
@@ -60,7 +61,7 @@ class BuyHoldwithMAV(BuyHoldRebalanceTemplate):
                 self.lastTrade.transTable[mvg] = row[mvg]   
     
     def ShowPerformance(self, res: pd.DataFrame, benchmark: str = None):
-        perf1 = PerfMeasure(res[BuyHoldRebalanceTemplate.dailyRet_label])
+        perf1 = PerfMeasure(res[AbstractStrategy.dailyRet_label])
         perf1.getPerfStats()
         logging.info('********************** Strategy sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4}, totalReturn: {:.2%}'.format(perf1.sharpie, perf1.mean, perf1.std, perf1.totalReturn))
         plotTwoYAxis([res[BuyHoldwithMAV.mv_label],res[self.symbols[0]]], [perf1.statsTable['cumret']])

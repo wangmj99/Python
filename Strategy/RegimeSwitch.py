@@ -3,13 +3,13 @@ from MarketDataMgr import *
 from datetime import datetime
 import matplotlib.pyplot as plt
 import logging
-from BuyHoldRebalanceTemplate import *
+from AbstractStrategy import *
 
 """
 predict regime switch of the stock if it's down x% from N-day high or up x% from N-day low, then short/long and hold for Y days.
 parameters will be 1. pct of down/up from high/low, 2. N days low/high, 3. holding period Y 
 """
-class RegimeSwitch(BuyHoldRebalanceTemplate):
+class RegimeSwitch(AbstractStrategy):
     logging.basicConfig(filename="./logs/RegimeSwitch.log", level=logging.INFO,
                     format="%(asctime)s %(message)s", datefmt='%d-%b-%y %H:%M:%S')    
     
@@ -80,7 +80,7 @@ class RegimeSwitch(BuyHoldRebalanceTemplate):
 
 
     def ShowPerformance(self, res: pd.DataFrame, benchmark: str = None):
-        perf1 = PerfMeasure(res[BuyHoldRebalanceTemplate.dailyRet_label])
+        perf1 = PerfMeasure(res[AbstractStrategy.dailyRet_label])
         perf1.getPerfStats()
         logging.info('********************** Strategy sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4}, totalReturn: {:.2%}'.format(perf1.sharpie, perf1.mean, perf1.std, perf1.totalReturn))
         #plotTwoYAxis([res[BuyHoldwithMAV.mv_label],res[self.symbols[0]]], [perf1.statsTable['cumret']])

@@ -114,3 +114,4 @@ ilocidx = s1.index.get_loc(dt, method='bfill')
 
 print('ilocidx: ' + str(ilocidx))
 print(s1.index[0])
+

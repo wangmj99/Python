@@ -6,13 +6,13 @@ import numpy as np
 import statsmodels.formula.api as smf
 from FinUtil import *
 from MarketDataMgr import *
-from BuyHoldRebalanceTemplate import * 
+from AbstractStrategy import * 
 import traceback
 from statsmodels.tsa.vector_ar.vecm import coint_johansen 
 from statsmodels.tsa.stattools import coint 
 
 
-class PairTrading(BuyHoldRebalanceTemplate):
+class PairTrading(AbstractStrategy):
     spread_lbl, zscore_lbl, mean_lbl, std_lbl, beta_lbl = 'spread', 'rollingZ', 'Mean', 'Std', 'Beta'
     logging.basicConfig(filename="./logs/PairTrading.log", level=logging.INFO,
                     format="%(asctime)s %(message)s", datefmt='%d-%b-%y %H:%M:%S')    
@@ -99,7 +99,7 @@ class PairTrading(BuyHoldRebalanceTemplate):
         
 
     def ShowPerformance(self, res: pd.DataFrame, benchmark: str = None):
-        perf1 = PerfMeasure(res[BuyHoldRebalanceTemplate.dailyRet_label])
+        perf1 = PerfMeasure(res[AbstractStrategy.dailyRet_label])
         perf1.getPerfStats()
         logging.info('********************** Strategy sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4}, totalReturn: {:.2%}, KellyWeight: {:.2%}'.
         format(perf1.sharpie, perf1.mean, perf1.std, perf1.totalReturn, perf1.kellyWeight/2))
@@ -130,29 +130,29 @@ class PairTrading(BuyHoldRebalanceTemplate):
           
         return signal
 
-testcase = PairTrading(['spyd', 'spyg'], 0, 1, 63)
-res, wts = testcase.backTest(datetime(2021,1,1), datetime(2022,12,31))
-testcase.ShowPerformance(res, 'Agg')
-signal = testcase.EvalTradeSignal()
-print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
+# testcase = PairTrading(['spyd', 'spyg'], 0, 1, 63)
+# res, wts = testcase.backTest(datetime(2021,1,1), datetime(2022,12,31))
+# testcase.ShowPerformance(res, 'Agg')
+# signal = testcase.EvalTradeSignal()
+# print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
 
 
-# examSymbols = [
-#                 ('v', 'ma'), 
-#                 ('mdy', 'spy'), 
-#                 ('gdx', 'gld'), 
-#                 ('pep', 'ko')
-#             ]
-# for pair in examSymbols:
-#     try:
-#         t = PairTrading(list(pair), 0, 1, 63)
-#         signal = t.EvalTradeSignal()
-#         print("Signal: {}, Pair: {}, Price: ({}, {}), ZScore: {}, ".format(signal.HasTradeSignal, pair, 
-#                 signal.status[str.upper(pair[0])], signal.status[str.upper(pair[1])],
-#                 signal.status[PairTrading.zscore_lbl]))
-#     except Exception as e :
-#         print('Fail to process {}, error: {}'.format(pair, e))
-#         logging.error(traceback.format_exc())
+examSymbols = [
+                ('v', 'ma'), 
+                ('mdy', 'voo'), 
+                ('gdx', 'gld'), 
+                ('pep', 'ko')
+            ]
+for pair in examSymbols:
+    try:
+        t = PairTrading(list(pair), 0, 1, 63)
+        signal = t.EvalTradeSignal()
+        print("Signal: {}, Pair: {}, Price: ({}, {}), ZScore: {}, ".format(signal.HasTradeSignal, pair, 
+                signal.status[str.upper(pair[0])], signal.status[str.upper(pair[1])],
+                signal.status[PairTrading.zscore_lbl]))
+    except Exception as e :
+        print('Fail to process {}, error: {}'.format(pair, e))
+        logging.error(traceback.format_exc())
 
 # s1, s2 = 'USO', 'DUG'
 # johntest = MarketDataMgr.getEquityDataSingleField([s1, s2], MarketDataMgr.adjcls_lbl, datetime(2021,9,1), datetime(2022,9,1))
