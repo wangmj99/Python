@@ -130,29 +130,29 @@ class PairTrading(AbstractStrategy):
           
         return signal
 
-# testcase = PairTrading(['spyd', 'spyg'], 0, 1, 63)
-# res, wts = testcase.backTest(datetime(2021,1,1), datetime(2022,12,31))
-# testcase.ShowPerformance(res, 'Agg')
-# signal = testcase.EvalTradeSignal()
-# print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
+testcase = PairTrading(['mdy', 'voo'], 0, 1, 63)
+res, wts = testcase.backTest(datetime(2021,1,1), datetime(2022,12,31))
+testcase.ShowPerformance(res, 'Agg')
+signal = testcase.EvalTradeSignal()
+print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
 
 
-examSymbols = [
-                ('v', 'ma'), 
-                ('mdy', 'voo'), 
-                ('gdx', 'gld'), 
-                ('pep', 'ko')
-            ]
-for pair in examSymbols:
-    try:
-        t = PairTrading(list(pair), 0, 1, 63)
-        signal = t.EvalTradeSignal()
-        print("Signal: {}, Pair: {}, Price: ({}, {}), ZScore: {}, ".format(signal.HasTradeSignal, pair, 
-                signal.status[str.upper(pair[0])], signal.status[str.upper(pair[1])],
-                signal.status[PairTrading.zscore_lbl]))
-    except Exception as e :
-        print('Fail to process {}, error: {}'.format(pair, e))
-        logging.error(traceback.format_exc())
+# examSymbols = [
+#                 ('v', 'ma'), 
+#                 ('mdy', 'voo'), 
+#                 ('gdx', 'gld'), 
+#                 ('pep', 'ko')
+#             ]
+# for pair in examSymbols:
+#     try:
+#         t = PairTrading(list(pair), 0, 1, 63)
+#         signal = t.EvalTradeSignal()
+#         print("Signal: {}, Pair: {}, Price: ({}, {}), ZScore: {}, ".format(signal.HasTradeSignal, pair, 
+#                 signal.status[str.upper(pair[0])], signal.status[str.upper(pair[1])],
+#                 signal.status[PairTrading.zscore_lbl]))
+#     except Exception as e :
+#         print('Fail to process {}, error: {}'.format(pair, e))
+#         logging.error(traceback.format_exc())
 
 # s1, s2 = 'USO', 'DUG'
 # johntest = MarketDataMgr.getEquityDataSingleField([s1, s2], MarketDataMgr.adjcls_lbl, datetime(2021,9,1), datetime(2022,9,1))

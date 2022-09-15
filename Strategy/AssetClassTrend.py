@@ -29,12 +29,12 @@ class AssetClassTrend(AbstractStrategy):
     def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame, startDate: datetime, endDate: datetime):
         col = mkd.columns
         
-        creatmvlbl = lambda x: '{}_MV'.format(x)
+        createmvlbl = lambda x: '{}_MV'.format(x)
 
         for symbol in col:
             rolling = mkd[symbol].rolling(self.window)
             mv_avg = rolling.mean().shift(1)
-            lbl = creatmvlbl(symbol)
+            lbl = createmvlbl(symbol)
             mkd[lbl] = mv_avg
 
         mkd = mkd.dropna()
@@ -54,7 +54,7 @@ class AssetClassTrend(AbstractStrategy):
             longs = set()
 
             for symbol in col:
-                mvlbl = creatmvlbl(symbol)
+                mvlbl = createmvlbl(symbol)
                 if row[symbol] >= row[mvlbl]:
                     longs.add(symbol)
 
@@ -71,9 +71,9 @@ class AssetClassTrend(AbstractStrategy):
             for symbol in col:
                 val = weight*self.leverage if symbol in longs else 0
                 wts.loc[index,symbol] = val 
-                self.lastTrade.transTable[trade_key][symbol] = [row[symbol], row[creatmvlbl(symbol)], val]
+                self.lastTrade.transTable[trade_key][symbol] = [row[symbol], row[createmvlbl(symbol)], val]
                 if val != 0:
-                    logstr.append('{} price: {}, mvg: {}, wts: {}'.format(symbol, round(row[symbol],2), round(row[creatmvlbl(symbol)],2), round(val,2) ))
+                    logstr.append('{} price: {}, mvg: {}, wts: {}'.format(symbol, round(row[symbol],2), round(row[createmvlbl(symbol)],2), round(val,2) ))
             
             if len(logstr) == 0: logstr.append('Exit all position')
             logging.info("Entry date: {0}, {1}".format(index.strftime('%m-%d-%Y'), '|'.join(logstr)))
@@ -92,7 +92,7 @@ class AssetClassTrend(AbstractStrategy):
 
 testcase = AssetClassTrend(["SPY", "EFA", "IEF", "VNQ", "GSG"], 0, 1, 210)
 #testcase = AssetClassTrend(["XLK", "XLV", "XLE", "XLY", "XLI", "XLRE", "XLP", "XLF", "XLC", "XLU", "XLB"], 0, 2, 210)
-res = testcase.backTest(datetime(2020,1,1), datetime(2022,12,31))
+res = testcase.backTest(datetime(2022,1,1), datetime(2022,2,2))
 testcase.ShowPerformance(res[0], 'SPY')
 
 
