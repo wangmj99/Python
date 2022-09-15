@@ -50,6 +50,6 @@ class MultipleAssetPeriodRebalance(AbstractStrategy):
 
         plotTwoYAxis([res[0][self.symbols[0]]], [perf1.statsTable['cumret']])
 
-testcase = MultipleAssetPeriodRebalance(['spy','agg', 'iwm'], [0.6, 0.2, 0.2], 63, 1)
-res = testcase.backTest(datetime(2012,1,1), datetime(2022,12,31))
+testcase = MultipleAssetPeriodRebalance(["SPY", "EFA", "IEF", "VNQ", "gsg"], [0.2, 0.2, 0.2, 0.2, 0.2], 63, 1)
+res = testcase.backTest(datetime(2000,1,1), datetime(2022,12,31))
 testcase.ShowPerformance(res, 'spy')

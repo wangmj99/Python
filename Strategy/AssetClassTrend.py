@@ -1,3 +1,4 @@
+from calendar import month
 from ntpath import join
 from FinUtil import *
 from MarketDataMgr import *
@@ -32,16 +33,22 @@ class AssetClassTrend(AbstractStrategy):
 
         for symbol in col:
             rolling = mkd[symbol].rolling(self.window)
-            mv_avg = rolling.mean()
+            mv_avg = rolling.mean().shift(1)
             lbl = creatmvlbl(symbol)
             mkd[lbl] = mv_avg
 
         mkd = mkd.dropna()
         mkd = mkd.loc[startDate:endDate]
 
+        trade_key, trade_date = "LastTrade", "LastTradeDate"
+
         for index, row in mkd.iterrows():
             if len(self.lastTrade.transTable) >0  and self.lastTrade.daysSinceLastTrade <= self.cooldowndays: # still in cooldownday:
                 self.lastTrade.daysSinceLastTrade +=1
+                continue
+            
+            # check and skip the same month
+            if len(self.lastTrade.transTable) >0 and self.lastTrade.transTable[trade_date].month == index.month:
                 continue
             
             longs = set()
@@ -51,22 +58,24 @@ class AssetClassTrend(AbstractStrategy):
                 if row[symbol] >= row[mvlbl]:
                     longs.add(symbol)
 
-            tmp = set([ x for x in self.lastTrade.transTable.keys() if self.lastTrade.transTable[x][2] >0])
-            if longs == tmp:
+            if len(self.lastTrade.transTable) > 0 and longs == set([ x for x in self.lastTrade.transTable[trade_key].keys() if self.lastTrade.transTable[trade_key][x][2] >0]):
                 continue
            
-            weight = 1/len(longs) if len(longs) > 0 else 0
+            weight = 1/len(longs)*self.leverage if len(longs) > 0 else 0
             self.lastTrade.transTable.clear()
+            self.lastTrade.transTable[trade_key] = {}
+            self.lastTrade.transTable[trade_date] = index
             self.lastTrade.daysSinceLastTrade = 1
 
             logstr = []
             for symbol in col:
-                val = weight if symbol in longs else 0
+                val = weight*self.leverage if symbol in longs else 0
                 wts.loc[index,symbol] = val 
-                self.lastTrade.transTable[symbol] = [row[symbol], row[creatmvlbl(symbol)], val]
+                self.lastTrade.transTable[trade_key][symbol] = [row[symbol], row[creatmvlbl(symbol)], val]
                 if val != 0:
                     logstr.append('{} price: {}, mvg: {}, wts: {}'.format(symbol, round(row[symbol],2), round(row[creatmvlbl(symbol)],2), round(val,2) ))
             
+            if len(logstr) == 0: logstr.append('Exit all position')
             logging.info("Entry date: {0}, {1}".format(index.strftime('%m-%d-%Y'), '|'.join(logstr)))
           
     
@@ -81,9 +90,9 @@ class AssetClassTrend(AbstractStrategy):
         if benchmark != None:
             self.ShowBenchmarkPerformance('spy',res.index[0], res.index[-1])
 
-#testcase = AssetClassTrend(["SPY", "EFA", "IEF", "VNQ", "GSG"], 0, 1, 210)
-testcase = AssetClassTrend(["XLK", "XLV", "XLE", "XLY", "XLI", "XLRE", "XLP", "XLF", "XLC", "XLU", "XLB"], 0, 1, 210)
-res = testcase.backTest(datetime(2022,1,1), datetime(2022,12,31))
+testcase = AssetClassTrend(["SPY", "EFA", "IEF", "VNQ", "GSG"], 0, 1, 210)
+#testcase = AssetClassTrend(["XLK", "XLV", "XLE", "XLY", "XLI", "XLRE", "XLP", "XLF", "XLC", "XLU", "XLB"], 0, 2, 210)
+res = testcase.backTest(datetime(2020,1,1), datetime(2022,12,31))
 testcase.ShowPerformance(res[0], 'SPY')
 
 
