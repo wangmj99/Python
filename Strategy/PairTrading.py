@@ -117,11 +117,13 @@ class PairTrading(AbstractStrategy):
         #endDate = datetime(2022,7,8)
         signal = Tradesignal()
         res, wts = self.backTest(datetime(2021,1,1), endDate)
+        
         if self.lastTrade.daysSinceLastTrade == 1:
             signal.HasTradeSignal = True
+            lastIdx = wts.index[-1]
             tmp = {}
             for symbol in wts.columns:
-                tmp[symbol] = wts.loc[endDate, symbol]
+                tmp[symbol] = wts.loc[lastIdx, symbol]
             signal.weights = tmp
         lastDateEntry = res.index[-1]
         signal.status[PairTrading.zscore_lbl] = res.loc[lastDateEntry, PairTrading.zscore_lbl]
