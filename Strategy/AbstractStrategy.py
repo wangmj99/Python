@@ -22,7 +22,7 @@ class AbstractStrategy:
     dailyRet_label = 'dailyRet'
 
     def __init__(self, symbols:list , cooldowndays = 0, leverage =1, warmupDays = 0):
-        self.symbols =list(set(map(str.upper, symbols)))
+        self.symbols =list(dict.fromkeys(map(str.upper, symbols)))
         self.leverage = leverage
         self.cooldowndays = cooldowndays  #cooldowndays after previous trade, to avoid frequent trades
         self.warmupDays = warmupDays # additional days of market data to prepare for certain algos using rolling window
