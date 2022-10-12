@@ -37,7 +37,7 @@ class AbstractStrategy:
         logging.info('---------------------------------------Start BackTest--------------------------------------')   
         warmstartDate = startDate if self.warmupDays == 0 else startDate - timedelta(days=self.warmupDays*2+3) 
 
-        mkd = MarketDataMgr.getEquityDataSingleField(self.symbols, MarketDataMgr.adjcls_lbl, warmstartDate, endDate, getMktDataCSV)       
+        mkd = MarketDataMgr.getEquityDataSingleField(self.symbols, MarketDataMgr.adjcls_lbl, warmstartDate, endDate, True, getMktDataCSV)       
         wts = pd.DataFrame(columns=self.symbols)
         self.BuildWeightsTable(mkd, wts, startDate, endDate)
         

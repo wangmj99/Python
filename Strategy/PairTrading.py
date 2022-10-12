@@ -1,4 +1,5 @@
 from datetime import date
+from lib2to3.pygram import Symbols
 from signal import SIGABRT
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -13,7 +14,7 @@ from statsmodels.tsa.stattools import coint
 
 
 class PairTrading(AbstractStrategy):
-    spread_lbl, zscore_lbl, mean_lbl, std_lbl, beta_lbl = 'spread', 'rollingZ', 'Mean', 'Std', 'Beta'
+    spread_lbl, zscore_lbl, mean_lbl, std_lbl, beta_lbl, hldDur_lbl = 'spread', 'rollingZ', 'Mean', 'Std', 'Beta', 'HldingDur'
     logging.basicConfig(filename="./logs/PairTrading.log", level=logging.INFO,
                     format="%(asctime)s %(message)s", datefmt='%d-%b-%y %H:%M:%S')    
 
@@ -30,6 +31,7 @@ class PairTrading(AbstractStrategy):
         mkd[PairTrading.mean_lbl]= 0.0
         mkd[PairTrading.std_lbl] = 0.0
         mkd[PairTrading.beta_lbl]= 0.0
+        mkd[PairTrading.hldDur_lbl]= 0.0
         
         #wts= pd.DataFrame(columns=[s1, s2])
         upThld, lowThld = 1.65, 0.5
@@ -59,6 +61,11 @@ class PairTrading(AbstractStrategy):
             mkd.loc[idx, PairTrading.mean_lbl] = tmpSprd.mean()
             mkd.loc[idx, PairTrading.std_lbl] = tmpSprd.std()
             mkd.loc[idx, PairTrading.beta_lbl] = lm.params[1]
+
+            if t-startIdx>=self.window:
+                tmps = mkd[PairTrading.spread_lbl].iloc[t-self.window: t+1]
+                holdTime = CalcHalfHoldingPeriod(tmps)
+                mkd.loc[idx, PairTrading.hldDur_lbl] = holdTime
             
             flag = False
             if self.lastTrade.transTable[tradeSignal] == 0:
@@ -116,7 +123,7 @@ class PairTrading(AbstractStrategy):
         endDate = datetime(now.year, now.month, now.day)
         #endDate = datetime(2022,7,8)
         signal = Tradesignal()
-        res, wts = self.backTest(datetime(2021,1,1), endDate)
+        res, wts = self.backTest(datetime(2022,1,1), endDate)
         if self.lastTrade.daysSinceLastTrade == 1:
             signal.HasTradeSignal = True
             tmp = {}
@@ -127,21 +134,85 @@ class PairTrading(AbstractStrategy):
         signal.status[PairTrading.zscore_lbl] = res.loc[lastDateEntry, PairTrading.zscore_lbl]
         signal.status[self.symbols[0]] = res.loc[lastDateEntry, self.symbols[0]]
         signal.status[self.symbols[1]] = res.loc[lastDateEntry, self.symbols[1]]
+        
           
         return signal
+    
+    @staticmethod
+    def PrepareData(symbols:list, startDate: datetime, endDate: datetime, warmupWindow: int):
+        warmstartDate = startDate - timedelta(days=warmupWindow*2+3) 
+        MarketDataMgr.retrieveHistoryDataToCSV(symbols, warmstartDate, endDate)
 
-testcase = PairTrading(['mdy', 'voo'], 0, 1, 63)
-res, wts = testcase.backTest(datetime(2021,1,1), datetime(2022,12,31))
-testcase.ShowPerformance(res, 'Agg')
-signal = testcase.EvalTradeSignal()
-print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
+    @staticmethod
+    def RunSymbolMatrixTest(symbols: list, startDate: datetime, endDate: datetime, windowTest: int, retrieveMktData: bool):
+        cooldownTest, leverageTest = 0, 1
+
+        perfRes = []
+        for idx1 in range(len(symbols)):
+            for idx2 in range(idx1+1, len(symbols)):
+                s1, s2 = symbols[idx1], symbols[idx2]
+                if s1 == s2: continue
+                testcase = PairTrading([s1, s2], cooldownTest, leverageTest, windowTest)
+                res, wts = testcase.backTest(startDate, endDate, retrieveMktData)
+                perfTest = PerfMeasure(res[AbstractStrategy.dailyRet_label])
+                perfTest.getPerfStats()
+                logging.info('********************** Strategy sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4}, totalReturn: {:.2%}, KellyWeight: {:.2%}'.
+                format(perfTest.sharpie, perfTest.mean, perfTest.std, perfTest.totalReturn, perfTest.kellyWeight/2))
+                tup = (s1, s2, perfTest)
+                perfRes.append(tup)
+        
+
+        perfRes.sort(key = lambda x: x[2].totalReturn,  reverse= True)
+        logging.info('Matrix Result Timeframe: {} to {}'.format(startDate, endDate))
+        for i in range(0, min(10, len(perfRes))):
+            item = perfRes[i]
+            logging.info('Matrix Result: {0}, {1}, return: {2:.2%}, sharpie: {3:.4}'.format( item[0], item[1], item[2].totalReturn, item[2].sharpie))
+        return perfRes
+
+    @staticmethod
+    def GetPairTestPerf(pair: list, startDate: datetime, endDate: datetime, windowTest: int, retrieveMktData: bool):
+        testcase = PairTrading(pair, 0, 1, windowTest )
+        res, wts = testcase.backTest(startDate, endDate, retrieveMktData)
+        perfTest = PerfMeasure(res[AbstractStrategy.dailyRet_label])
+        perfTest.getPerfStats()
+        return perfTest
+
+
+
+s = ["XLK", "XLV", "XLE", "XLY", "XLI", "XLRE", "XLP", "XLF", "XLC", "XLU", "XLB"]
+windowTest = 63
+#PairTrading.PrepareData(s, datetime(2020,1,1),datetime(2022,12,31), windowTest)
+logging.info('Matrix Result 2020')
+trainRes = PairTrading.RunSymbolMatrixTest(s, datetime(2020,1,1),datetime(2020,12,31), windowTest, False)
+testSymbol = [(x[0], x[1]) for x in trainRes[:10]]
+logging.info('Matrix Result 2021')
+for pair in testSymbol:
+    testRes = PairTrading.GetPairTestPerf(pair, datetime(2021,1,1), datetime(2021,12,31), windowTest, False)
+    logging.info('Matrix Result: {0}, {1}, return: {2:.2%}, sharpie: {3:.4}'.format( testRes[0], testRes[1], testRes[2].totalReturn, testRes[2].sharpie))
+logging.info('Matrix Result 2022')
+for pair in testSymbol:
+    testRes = PairTrading.GetPairTestPerf(pair, datetime(2022,1,1), datetime(2022,12,31), windowTest, False)
+    logging.info('Matrix Result: {0}, {1}, return: {2:.2%}, sharpie: {3:.4}'.format( testRes[0], testRes[1], testRes[2].totalReturn, testRes[2].sharpie))
+
+
+
+#PairTrading.RunSymbolMatrixTest(s, datetime(2021,1,1),datetime(2021,12,31), windowTest)
+#PairTrading.RunSymbolMatrixTest(s, datetime(2022,1,1),datetime(2022,12,31), windowTest)
+
+
+
+# testcase = PairTrading(['xlp', 'xlu'], 0, 1, 63)
+# res, wts = testcase.backTest(datetime(2022,1,1), datetime(2022,12,31))
+# testcase.ShowPerformance(res, 'spy')
+# signal = testcase.EvalTradeSignal()
+# print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
 
 
 # examSymbols = [
 #                 ('v', 'ma'), 
 #                 ('mdy', 'voo'), 
-#                 ('gdx', 'gld'), 
-#                 ('pep', 'ko')
+#                 ('xlk', 'xlu'), 
+#                 ('xlv', 'xlu')
 #             ]
 # for pair in examSymbols:
 #     try:

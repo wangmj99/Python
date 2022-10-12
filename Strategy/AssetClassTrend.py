@@ -90,9 +90,9 @@ class AssetClassTrend(AbstractStrategy):
         if benchmark != None:
             self.ShowBenchmarkPerformance('spy',res.index[0], res.index[-1])
 
-testcase = AssetClassTrend(["SPY", "EFA", "IEF", "VNQ", "GSG"], 0, 1, 210)
-#testcase = AssetClassTrend(["XLK", "XLV", "XLE", "XLY", "XLI", "XLRE", "XLP", "XLF", "XLC", "XLU", "XLB"], 0, 2, 210)
-res = testcase.backTest(datetime(2022,1,1), datetime(2022,2,2))
+#testcase = AssetClassTrend(["SPY", "EFA", "IEF", "VNQ", "GSG"], 0, 1, 210)
+testcase = AssetClassTrend(["XLK", "XLV", "XLE", "XLY", "XLI", "XLRE", "XLP", "XLF", "XLC", "XLU", "XLB", "TLT", "DBC"], 0, 2, 210)
+res = testcase.backTest(datetime(2020,1,1), datetime(2021,12,2))
 testcase.ShowPerformance(res[0], 'SPY')
 
 
