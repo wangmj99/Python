@@ -162,7 +162,7 @@ def plotTwoYAxis(group1:list, group2:list):
 # input list of price series represent multiple stock prices and  portfolio weights (pct, add to 100%) series for each stock.
 # weight series only contain the weights update for each buy/sell transactions.
 # eg. portfolio weights change at day1 and day3, weithgs series should be  day1: 20%, 0%, 80% , day3: 50%, 10%,40%, there is no entry for day2
-def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame):
+def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame, startDate: datetime, endDate: datetime):
 
     #wgts['total'] = wgts.sum(axis=1)
     #lm = lambda x: 1 if abs(1- x['total'])<=0.001 else (0 if abs(x['total'])<=0.001 else -1)
@@ -176,6 +176,8 @@ def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame):
 
     pnl = []
     for index, row in prices.iterrows():
+        if index > endDate: 
+            break
         tmpPnl = 0
         if index in wgts.index:
             #find update
@@ -206,7 +208,7 @@ def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame):
             pnl.append(currRet)
     cumRet = pd.Series(pnl).rename('cumRet')
     idxLoc = prices.index.get_loc(firstIdx)
-    cumRet.index = prices.index[idxLoc:]
+    cumRet.index = prices.index[idxLoc: idxLoc + len(pnl)]
     res = getDailyPnlFromCumReturn(cumRet)
     """
     tmpPD = pd.concat([prices, cumRet], axis = 1, join = 'inner')

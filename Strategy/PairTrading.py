@@ -41,11 +41,14 @@ class PairTrading(AbstractStrategy):
         #get the startdate index in the dataframe
         startIdx = mkd.index.get_loc(startDate, method='bfill') 
 
+        endIdx = mkd.index.get_loc(endDate, method='ffill') 
+
         #mark the start position
         wts.loc[mkd.index[startIdx]] = [0,0]
 
         #for t in range(self.window-1, len(mkd)):
-        for t in range(startIdx, len(mkd)):
+        #for t in range(startIdx, len(mkd)):
+        for t in range(startIdx, endIdx+1):
             tmpdf = mkd.iloc[t-self.window+1:t+1]
             
             #s2 = smf.add_constant(s2)
@@ -180,19 +183,21 @@ class PairTrading(AbstractStrategy):
 
 
 s = ["XLK", "XLV", "XLE", "XLY", "XLI", "XLRE", "XLP", "XLF", "XLC", "XLU", "XLB"]
+#s = ["XLV","XLRE"]
 windowTest = 63
 #PairTrading.PrepareData(s, datetime(2020,1,1),datetime(2022,12,31), windowTest)
 logging.info('Matrix Result 2020')
 trainRes = PairTrading.RunSymbolMatrixTest(s, datetime(2020,1,1),datetime(2020,12,31), windowTest, False)
+trainRes.sort(key = lambda x: x[2].totalReturn,  reverse= False)
 testSymbol = [(x[0], x[1]) for x in trainRes[:10]]
 logging.info('Matrix Result 2021')
 for pair in testSymbol:
     testRes = PairTrading.GetPairTestPerf(pair, datetime(2021,1,1), datetime(2021,12,31), windowTest, False)
-    logging.info('Matrix Result: {0}, {1}, return: {2:.2%}, sharpie: {3:.4}'.format( testRes[0], testRes[1], testRes[2].totalReturn, testRes[2].sharpie))
+    logging.info('Matrix Result: {0} - {1}, return: {2:.2%}, sharpie: {3:.4}'.format( pair[0], pair[1], testRes.totalReturn, testRes.sharpie))
 logging.info('Matrix Result 2022')
 for pair in testSymbol:
     testRes = PairTrading.GetPairTestPerf(pair, datetime(2022,1,1), datetime(2022,12,31), windowTest, False)
-    logging.info('Matrix Result: {0}, {1}, return: {2:.2%}, sharpie: {3:.4}'.format( testRes[0], testRes[1], testRes[2].totalReturn, testRes[2].sharpie))
+    logging.info('Matrix Result: {0} - {1}, return: {2:.2%}, sharpie: {3:.4}'.format( pair[0], pair[1], testRes.totalReturn, testRes.sharpie))
 
 
 
@@ -201,8 +206,8 @@ for pair in testSymbol:
 
 
 
-# testcase = PairTrading(['xlp', 'xlu'], 0, 1, 63)
-# res, wts = testcase.backTest(datetime(2022,1,1), datetime(2022,12,31))
+# testcase = PairTrading(['xlv', 'xlre'], 0, 1, 63)
+# res, wts = testcase.backTest(datetime(2020,1,1), datetime(2020,12,31))
 # testcase.ShowPerformance(res, 'spy')
 # signal = testcase.EvalTradeSignal()
 # print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))

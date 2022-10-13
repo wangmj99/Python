@@ -41,7 +41,7 @@ class AbstractStrategy:
         wts = pd.DataFrame(columns=self.symbols)
         self.BuildWeightsTable(mkd, wts, startDate, endDate)
         
-        dailyRet= GetDailyPnlFromPriceAndWeightChg(mkd[self.symbols], wts).rename(AbstractStrategy.dailyRet_label)
+        dailyRet= GetDailyPnlFromPriceAndWeightChg(mkd[self.symbols], wts, startDate, endDate).rename(AbstractStrategy.dailyRet_label)
         res=pd.concat([mkd, dailyRet], axis = 1, join = 'inner')
 
         #wts.to_csv(MarketDataMgr.dataFilePath.format('tmp_wts'))
