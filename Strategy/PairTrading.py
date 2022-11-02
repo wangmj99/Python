@@ -1,6 +1,8 @@
 from datetime import date
 from lib2to3.pygram import Symbols
+from logging import lastResort
 from signal import SIGABRT
+from tempfile import tempdir
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,15 +17,18 @@ from statsmodels.tsa.stattools import coint
 
 class PairTrading(AbstractStrategy):
     spread_lbl, zscore_lbl, mean_lbl, std_lbl, beta_lbl, hldDur_lbl = 'spread', 'rollingZ', 'Mean', 'Std', 'Beta', 'HldingDur'
+    tradeSignal = 'Signal'
     logging.basicConfig(filename="./logs/PairTrading.log", level=logging.INFO,
                     format="%(asctime)s %(message)s", datefmt='%d-%b-%y %H:%M:%S')    
 
-    def __init__(self, symbols: list, cooldowndays=0, leverage=1, window = 50):
+    def __init__(self, symbols: list, cooldowndays=0, leverage=1, window = 50, stoploss = 100):
         super().__init__(symbols, cooldowndays, leverage)
         self.window = window
         self.warmupDays = window
+        self.stoploss = -abs(stoploss/100)
 
     def BuildWeightsTable(self, mkd:pd.DataFrame, wts: pd.DataFrame,startDate: datetime, endDate: datetime):
+        #stoploss = self.stoploss
         s1, s2 = self.symbols[0], self.symbols[1]
 
         mkd[PairTrading.zscore_lbl] = 0.0
@@ -35,8 +40,8 @@ class PairTrading(AbstractStrategy):
         
         #wts= pd.DataFrame(columns=[s1, s2])
         upThld, lowThld = 1.65, 0.5
-        tradeSignal = 'Signal'
-        self.lastTrade.transTable = {tradeSignal : 0} # 1 long spread, -1 short spread, 0 no postion
+        
+        self.lastTrade.transTable = {PairTrading.tradeSignal : 0} # 1 long spread, -1 short spread, 0 no postion
 
         #get the startdate index in the dataframe
         startIdx = mkd.index.get_loc(startDate, method='bfill') 
@@ -71,26 +76,57 @@ class PairTrading(AbstractStrategy):
                 mkd.loc[idx, PairTrading.hldDur_lbl] = holdTime
             
             flag = False
-            if self.lastTrade.transTable[tradeSignal] == 0:
+
+            if self.lastTrade.isStopLoss and self.lastTrade.daysSinceLastTrade <= self.cooldowndays:
+                self.lastTrade.daysSinceLastTrade +=1
+                logging.info('Still in the cooldown days after stoploss, Date: {}'.format(idx))
+                continue
+
+            if self.lastTrade.transTable[PairTrading.tradeSignal] == 0:
                 if zscore >= upThld:
                     wts.loc[idx] = [-1, 1]
-                    self.lastTrade.transTable[tradeSignal] = -1
+                    self.lastTrade.transTable[PairTrading.tradeSignal] = -1
+                    self.lastTrade.transTable[s1] = mkd.loc[idx, s1]  #log transaction s1 price
+                    self.lastTrade.transTable[s2] = mkd.loc[idx, s2]  #log transaction s2 price
+                    self.lastTrade.isStopLoss = False
                     flag = True
                 elif zscore <= -upThld:
                     wts.loc[idx] = [1, -1]
-                    self.lastTrade.transTable[tradeSignal] = 1
+                    self.lastTrade.transTable[PairTrading.tradeSignal] = 1
+                    self.lastTrade.transTable[s1] = mkd.loc[idx, s1]  #log transaction s1 price
+                    self.lastTrade.transTable[s2] = mkd.loc[idx, s2]  #log transaction s2 price
+                    self.lastTrade.isStopLoss = False
                     flag = True
-            elif self.lastTrade.transTable[tradeSignal] == 1:
+            elif self.lastTrade.transTable[PairTrading.tradeSignal] == 1:
                 if zscore >=-lowThld:
                     wts.loc[idx] = [0,0]
-                    self.lastTrade.transTable[tradeSignal] = 0
+                    self.lastTrade.transTable[PairTrading.tradeSignal] = 0
+                    del self.lastTrade.transTable[s1]  #remove s1 from lastTrade
+                    del self.lastTrade.transTable[s2]  #remove s2 from lastTrade
+                    self.lastTrade.isStopLoss = False
                     flag = True
-            else:  # tradesignal = -1
+            else: # tradeSignal == -1
                 if zscore <= lowThld:
                     wts.loc[idx] = [0,0]
-                    self.lastTrade.transTable[tradeSignal] = 0
+                    self.lastTrade.transTable[PairTrading.tradeSignal] = 0
+                    del self.lastTrade.transTable[s1]  #remove s1 from lastTrade
+                    del self.lastTrade.transTable[s2]  #remove s2 from lastTrade
+                    self.lastTrade.isStopLoss = False
                     flag = True
 
+            # check stop loss
+            if self.stoploss > -1 and flag == False and self.lastTrade.transTable[PairTrading.tradeSignal] != 0:  
+                
+                tmpPerf =  self.GetPnlSinceLastTrade(self.lastTrade, mkd.loc[idx, s1], mkd.loc[idx, s2])
+                if tmpPerf <= self.stoploss:
+                    wts.loc[idx] = [0,0]
+                    self.lastTrade.transTable[PairTrading.tradeSignal] = 0
+                    self.lastTrade.isStopLoss = True
+                    del self.lastTrade.transTable[s1]  #remove s1 from lastTrade
+                    del self.lastTrade.transTable[s2]  #remove s2 from lastTrade
+                    flag = True
+                    logging.info('Stop loss triggered: loss: {:.2%}'.format(tmpPerf))
+                
             if flag == True:
                 self.lastTrade.daysSinceLastTrade = 1
                 actionstr = actionStr = 'Enter Trade' if wts.loc[idx, s1]!=0 else 'Exit Trade'
@@ -107,6 +143,13 @@ class PairTrading(AbstractStrategy):
         wts.to_csv(MarketDataMgr.dataFilePath.format('tmp_wts_({}, {})'.format(s1, s2)))
         mkd.to_csv(MarketDataMgr.dataFilePath.format('tmp_({}, {})'.format(s1, s2)))
         
+    def GetPnlSinceLastTrade(self, lastTrade: LastTradeInfo, s1price, s2price):
+        s1, s2 = self.symbols[0], self.symbols[1]
+        s10Price, s20Price = lastTrade.transTable[s1], lastTrade.transTable[s2]
+        s1perf = s1price/s10Price -1
+        s2perf = s2price/s20Price -1
+        res = lastTrade.transTable[PairTrading.tradeSignal] *(s1perf - s2perf)
+        return res
 
     def ShowPerformance(self, res: pd.DataFrame, benchmark: str = None):
         perf1 = PerfMeasure(res[AbstractStrategy.dailyRet_label])
@@ -182,22 +225,22 @@ class PairTrading(AbstractStrategy):
 
 
 
-s = ["XLK", "XLV", "XLE", "XLY", "XLI", "XLRE", "XLP", "XLF", "XLC", "XLU", "XLB"]
-#s = ["XLV","XLRE"]
-windowTest = 63
-#PairTrading.PrepareData(s, datetime(2020,1,1),datetime(2022,12,31), windowTest)
-logging.info('Matrix Result 2020')
-trainRes = PairTrading.RunSymbolMatrixTest(s, datetime(2020,1,1),datetime(2020,12,31), windowTest, False)
-trainRes.sort(key = lambda x: x[2].totalReturn,  reverse= False)
-testSymbol = [(x[0], x[1]) for x in trainRes[:10]]
-logging.info('Matrix Result 2021')
-for pair in testSymbol:
-    testRes = PairTrading.GetPairTestPerf(pair, datetime(2021,1,1), datetime(2021,12,31), windowTest, False)
-    logging.info('Matrix Result: {0} - {1}, return: {2:.2%}, sharpie: {3:.4}'.format( pair[0], pair[1], testRes.totalReturn, testRes.sharpie))
-logging.info('Matrix Result 2022')
-for pair in testSymbol:
-    testRes = PairTrading.GetPairTestPerf(pair, datetime(2022,1,1), datetime(2022,12,31), windowTest, False)
-    logging.info('Matrix Result: {0} - {1}, return: {2:.2%}, sharpie: {3:.4}'.format( pair[0], pair[1], testRes.totalReturn, testRes.sharpie))
+# s = ["XLK", "XLV", "XLE", "XLY", "XLI", "XLRE", "XLP", "XLF", "XLC", "XLU", "XLB"]
+# #s = ["XLV","XLRE"]
+# windowTest = 63
+# #PairTrading.PrepareData(s, datetime(2020,1,1),datetime(2022,12,31), windowTest)
+# logging.info('Matrix Result 2020')
+# trainRes = PairTrading.RunSymbolMatrixTest(s, datetime(2020,1,1),datetime(2020,12,31), windowTest, False)
+# trainRes.sort(key = lambda x: x[2].totalReturn,  reverse= True)
+# testSymbol = [(x[0], x[1]) for x in trainRes[:10]]
+# logging.info('Matrix Result 2021')
+# for pair in testSymbol:
+#     testRes = PairTrading.GetPairTestPerf(pair, datetime(2021,1,1), datetime(2021,12,31), windowTest, False)
+#     logging.info('Matrix Result: {0} - {1}, return: {2:.2%}, sharpie: {3:.4}'.format( pair[0], pair[1], testRes.totalReturn, testRes.sharpie))
+# logging.info('Matrix Result 2022')
+# for pair in testSymbol:
+#     testRes = PairTrading.GetPairTestPerf(pair, datetime(2022,1,1), datetime(2022,12,31), windowTest, False)
+#     logging.info('Matrix Result: {0} - {1}, return: {2:.2%}, sharpie: {3:.4}'.format( pair[0], pair[1], testRes.totalReturn, testRes.sharpie))
 
 
 
@@ -206,18 +249,21 @@ for pair in testSymbol:
 
 
 
-# testcase = PairTrading(['xlv', 'xlre'], 0, 1, 63)
-# res, wts = testcase.backTest(datetime(2020,1,1), datetime(2020,12,31))
-# testcase.ShowPerformance(res, 'spy')
-# signal = testcase.EvalTradeSignal()
-# print("Signal: {}, ZScore: {}".format(signal.HasTradeSignal,  signal.status[PairTrading.zscore_lbl]))
+testcase = PairTrading(['mdy', 'spy'], 5, 1, 63, 4)
+res, wts = testcase.backTest(datetime(2022,1,1), datetime(2022,12,31), False)
+testcase.ShowPerformance(res)
+#signal = testcase.EvalTradeSignal()
+signal = testcase.lastTrade.daysSinceLastTrade == 1
+zcore = res.loc[res.index[-1], PairTrading.zscore_lbl]
+print("Signal: {}, ZScore: {}".format(signal,  zcore))
 
 
 # examSymbols = [
 #                 ('v', 'ma'), 
 #                 ('mdy', 'voo'), 
-#                 ('xlk', 'xlu'), 
-#                 ('xlv', 'xlu')
+#                 ('xlv', 'xlre'),
+#                 ('xlv', 'xlc')
+#                 ('xly', 'xli')
 #             ]
 # for pair in examSymbols:
 #     try:

@@ -83,11 +83,11 @@ class RegimeSwitch(AbstractStrategy):
         perf1 = PerfMeasure(res[AbstractStrategy.dailyRet_label])
         perf1.getPerfStats()
         logging.info('********************** Strategy sharpie(yearly): {:.4}, mean(daily): {:.4}, std(daily): {:.4}, totalReturn: {:.2%}'.format(perf1.sharpie, perf1.mean, perf1.std, perf1.totalReturn))
-        #plotTwoYAxis([res[BuyHoldwithMAV.mv_label],res[self.symbols[0]]], [perf1.statsTable['cumret']])
+        plotTwoYAxis([res[self.symbols[0]]], [perf1.statsTable['cumret']])
 
         if benchmark != None:
             self.ShowBenchmarkPerformance('spy',res.index[0], res.index[-1])
 
-testcase = RegimeSwitch(['gs'], 42, 10, 21)
-res = testcase.backTest(datetime(2022,1,1), datetime(2022,9,10))
+testcase = RegimeSwitch(['xlf'], 42, 10, 21)
+res = testcase.backTest(datetime(2022,1,1), datetime(2022,12,10))
 testcase.ShowPerformance(res[0], 'SPY')

@@ -11,6 +11,7 @@ class LastTradeInfo:
     def __init__(self) -> None:
         self.daysSinceLastTrade = 0
         self.transTable = {} #dictionary record last trades info, symbol and price pair
+        self.isStopLoss = False
 
 class Tradesignal:
     def __init__(self) -> None:
