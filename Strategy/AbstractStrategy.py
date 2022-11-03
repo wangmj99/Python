@@ -11,6 +11,7 @@ class LastTradeInfo:
     def __init__(self) -> None:
         self.daysSinceLastTrade = 0
         self.transTable = {} #dictionary record last trades info, symbol and price pair
+        self.isStopLoss = False
 
 class Tradesignal:
     def __init__(self) -> None:
@@ -22,7 +23,7 @@ class AbstractStrategy:
     dailyRet_label = 'dailyRet'
 
     def __init__(self, symbols:list , cooldowndays = 0, leverage =1, warmupDays = 0):
-        self.symbols =list(set(map(str.upper, symbols)))
+        self.symbols =list(dict.fromkeys(map(str.upper, symbols)))
         self.leverage = leverage
         self.cooldowndays = cooldowndays  #cooldowndays after previous trade, to avoid frequent trades
         self.warmupDays = warmupDays # additional days of market data to prepare for certain algos using rolling window
@@ -37,11 +38,11 @@ class AbstractStrategy:
         logging.info('---------------------------------------Start BackTest--------------------------------------')   
         warmstartDate = startDate if self.warmupDays == 0 else startDate - timedelta(days=self.warmupDays*2+3) 
 
-        mkd = MarketDataMgr.getEquityDataSingleField(self.symbols, MarketDataMgr.adjcls_lbl, warmstartDate, endDate, getMktDataCSV)       
+        mkd = MarketDataMgr.getEquityDataSingleField(self.symbols, MarketDataMgr.adjcls_lbl, warmstartDate, endDate, True, getMktDataCSV)       
         wts = pd.DataFrame(columns=self.symbols)
         self.BuildWeightsTable(mkd, wts, startDate, endDate)
         
-        dailyRet= GetDailyPnlFromPriceAndWeightChg(mkd[self.symbols], wts).rename(AbstractStrategy.dailyRet_label)
+        dailyRet= GetDailyPnlFromPriceAndWeightChg(mkd[self.symbols], wts, startDate, endDate).rename(AbstractStrategy.dailyRet_label)
         res=pd.concat([mkd, dailyRet], axis = 1, join = 'inner')
 
         #wts.to_csv(MarketDataMgr.dataFilePath.format('tmp_wts'))
@@ -84,8 +85,3 @@ class AbstractStrategy:
     '''
     def EvalTradeSignal(self):
         pass
-
-
-
-
-

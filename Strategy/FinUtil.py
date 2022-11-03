@@ -9,6 +9,7 @@ from MarketDataMgr import *
 import matplotlib.pyplot as plt
 from statsmodels.tsa.vector_ar.vecm import coint_johansen 
 import numpy as np
+import statsmodels.formula.api as smf
 
 class PerfMeasure:
     def __init__(self,dailyPnl:pd.Series) -> None:
@@ -161,7 +162,7 @@ def plotTwoYAxis(group1:list, group2:list):
 # input list of price series represent multiple stock prices and  portfolio weights (pct, add to 100%) series for each stock.
 # weight series only contain the weights update for each buy/sell transactions.
 # eg. portfolio weights change at day1 and day3, weithgs series should be  day1: 20%, 0%, 80% , day3: 50%, 10%,40%, there is no entry for day2
-def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame):
+def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame, startDate: datetime, endDate: datetime):
 
     #wgts['total'] = wgts.sum(axis=1)
     #lm = lambda x: 1 if abs(1- x['total'])<=0.001 else (0 if abs(x['total'])<=0.001 else -1)
@@ -175,6 +176,8 @@ def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame):
 
     pnl = []
     for index, row in prices.iterrows():
+        if index > endDate: 
+            break
         tmpPnl = 0
         if index in wgts.index:
             #find update
@@ -205,7 +208,7 @@ def GetDailyPnlFromPriceAndWeightChg(prices: pd.DataFrame, wgts: pd.DataFrame):
             pnl.append(currRet)
     cumRet = pd.Series(pnl).rename('cumRet')
     idxLoc = prices.index.get_loc(firstIdx)
-    cumRet.index = prices.index[idxLoc:]
+    cumRet.index = prices.index[idxLoc: idxLoc + len(pnl)]
     res = getDailyPnlFromCumReturn(cumRet)
     """
     tmpPD = pd.concat([prices, cumRet], axis = 1, join = 'inner')
@@ -241,6 +244,47 @@ def johansenCointTest(df: pd.DataFrame, confidenceLvl = 90):
     res = np.all(result.lr1 >= trace_crit_value) and np.all(result.lr2 >= eigen_crit_value)
     return res
 
-        
+def CalcHalfHoldingPeriod(spread: pd.Series):
+    prv = spread.shift(1)
+    delta = spread - prv
 
-    
+    prv = prv.dropna()
+    delta = delta.dropna()
+
+    mean = prv.mean()
+    prv = prv- mean
+
+    frame = {'delta': delta, 'prv': prv}
+    df =pd.DataFrame(frame)
+
+    f = '{}~{}'.format('delta', 'prv')
+    lm = smf.ols(formula=f, data=df).fit()
+
+    theate = lm.params[1]
+
+    res=  -np.log(2)/theate
+
+    return res
+
+
+# idx = pd.date_range('1/1/2021', periods=10, freq='D')
+# s1 = pd.Series([x for x in range(1,11)])
+# s1.index = idx
+
+# holding = CalcHalfHoldingPeriod(s1)
+
+
+        
+# price = {'SPY': [350.209991,354.670013,355.869995,346.130005,336.709991,337.549988,341.820007,335.820007,337.48999,341.119995], 
+#         'TLT': [161.759995,163.509995,165.75,164.410004,164.369995,163.940002,162.460007,164.309998,164.789993,164.169998]}
+
+# wts = {'SPY':[1.5,0.5], 'TLT':[-0.5, 0.5], 'Date':[datetime(2021,9,1), datetime(2021, 9,7)]}
+
+# idx_p = pd.date_range('9/1/2021', periods=10, freq='D')    
+
+# df1 = pd.DataFrame(price)
+# df1.index = idx_p
+# df2 = pd.DataFrame(wts)
+# df2.set_index('Date', inplace=True)
+
+# GetDailyPnlFromPriceAndWeightChg(df1, df2)
