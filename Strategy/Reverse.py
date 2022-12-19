@@ -6,11 +6,10 @@ import logging
 from AbstractStrategy import *
 
 """
-predict regime switch of the stock if it's down x% from N-day high or up x% from N-day low, then short/long and hold for Y days.
-parameters will be 1. pct of down/up from high/low, 2. N days low/high, 3. holding period Y 
+long index if down x% from recent high and VIX >=30 , short index if up y% from recent low and VIX <=20
 """
-class RegimeSwitch(AbstractStrategy):
-    logging.basicConfig(filename="./logs/RegimeSwitch.log", level=logging.INFO,
+class Reverse(AbstractStrategy):
+    logging.basicConfig(filename="./logs/Reverse.log", level=logging.INFO,
                     format="%(asctime)s %(message)s", datefmt='%d-%b-%y %H:%M:%S')    
     
 
@@ -50,23 +49,27 @@ class RegimeSwitch(AbstractStrategy):
                 flag = True
                 
             else:
-                #if up certain pct from ndays low, go long:
+                #if up certain pct from ndays low, go short:
                 if self.lastTrade.transTable[tradeSignal] == 0:
-                    if row[symbol] >= row['low']*(1+self.pctChg):
-                        wts.loc[idx] = [1]
-                        self.lastTrade.transTable[tradeSignal] = 1
-                        flag = True
-                    elif row[symbol] <= row['high']*(1-self.pctChg):
+                    #if row[symbol] >= row['low']*(1+self.pctChg):
+                    if row[symbol] >= row['low']*1.12:
                         wts.loc[idx] = [-1]
                         self.lastTrade.transTable[tradeSignal] = -1
                         flag = True
+                    #elif row[symbol] <= row['high']*(1-self.pctChg):
+                    elif row[symbol] <= row['high']*0.9:
+                        wts.loc[idx] = [1]
+                        self.lastTrade.transTable[tradeSignal] = 1
+                        flag = True
                 elif self.lastTrade.transTable[tradeSignal] == 1: # long position
-                    if row[symbol] <= row['high']*(1-self.pctChg):
+                    #if row[symbol] >= row['low']*(1+self.pctChg):
+                    if row[symbol] >= row['low']*1.12:
                         wts.loc[idx] = [-1]
                         self.lastTrade.transTable[tradeSignal] = -1
                         flag = True
                 else: # hold short position
-                    if row[symbol] >= row['low']*(1+self.pctChg):
+                    #if row[symbol] <= row['high']*(1-self.pctChg):
+                    if row[symbol] <= row['high']*0.9:
                         wts.loc[idx] = [1]
                         self.lastTrade.transTable[tradeSignal] = 1
                         flag = True
@@ -88,6 +91,6 @@ class RegimeSwitch(AbstractStrategy):
         if benchmark != None:
             self.ShowBenchmarkPerformance('spy',res.index[0], res.index[-1])
 
-testcase = RegimeSwitch(['dia'], 42, 15, 42)
-res = testcase.backTest(datetime(2022,1,1), datetime(2022,12,10))
+testcase = Reverse(['spy'], 61, 1, 42)
+res = testcase.backTest(datetime(2011,1,1), datetime(2022,12,30))
 testcase.ShowPerformance(res[0], 'SPY')

@@ -250,7 +250,7 @@ class PairTrading(AbstractStrategy):
 
 
 testcase = PairTrading(['mdy', 'spy'], 5, 1, 63, 4)
-res, wts = testcase.backTest(datetime(2022,1,1), datetime(2022,12,31), False)
+res, wts = testcase.backTest(datetime(2022,1,1), datetime(2022,12,31), True)
 testcase.ShowPerformance(res)
 #signal = testcase.EvalTradeSignal()
 signal = testcase.lastTrade.daysSinceLastTrade == 1
@@ -262,7 +262,7 @@ print("Signal: {}, ZScore: {}".format(signal,  zcore))
 #                 ('v', 'ma'), 
 #                 ('mdy', 'voo'), 
 #                 ('xlv', 'xlre'),
-#                 ('xlv', 'xlc')
+#                 ('xlv', 'xlc'),
 #                 ('xly', 'xli')
 #             ]
 # for pair in examSymbols:
