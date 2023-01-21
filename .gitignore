@@ -1,5 +1,7 @@
 data/
 logs/
+.venv/
+.__pycache__/
 Strategy/__pycache__/
 data/SPY.csv
 data/TLT.csv
